@@ -46,7 +46,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'gheychi.urls'
+ROOT_URLCONF = 'ghablameh.urls'
 
 TEMPLATES = [
     {
@@ -64,7 +64,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'gheychi.wsgi.application'
+WSGI_APPLICATION = 'ghablameh.wsgi.application'
 
 DATABASES = {
     'default': {
@@ -105,11 +105,11 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-STATIC_ROOT = "/var/www/gheychi/static"
+STATIC_ROOT = "/var/www/ghablameh/static"
 
 MEDIA_URL = 'media/'
 
-MEDIA_ROOT = "/var/www/gheychi/media"
+MEDIA_ROOT = "/var/www/ghablameh/media"
 
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
