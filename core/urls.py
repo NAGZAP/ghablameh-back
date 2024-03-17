@@ -8,5 +8,5 @@ router.register("auth",views.Authentication,basename="authentication")
 
 
 urlpatterns = [
-    path('hello_world/',views.hello_world)
+    path('hello_world',views.hello_world)
 ] + router.urls
