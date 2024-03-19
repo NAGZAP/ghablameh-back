@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from rest_framework import serializers
-from django.contrib.auth.models import User
+from core.models import User
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.password_validation import validate_password
 
@@ -11,7 +11,7 @@ class LoginSerializer(serializers.Serializer):
     password = serializers.CharField(max_length=127)
     
     
-class SignUpSerializer(serializers.Serializer):
+class SignUpSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(
             required=True,
             validators=[UniqueValidator(queryset=User.objects.all())]
@@ -22,7 +22,7 @@ class SignUpSerializer(serializers.Serializer):
 
     class Meta:
         model = User
-        fields = ('username', 'password', 'password2', 'email', 'first_name', 'last_name','phone_number','birth_date')
+        fields = ('username', 'password', 'password2', 'email', 'first_name', 'last_name','phone_number')
         extra_kwargs = {
             'first_name': {'required': True},
             'last_name': {'required': True}
@@ -41,7 +41,7 @@ class SignUpSerializer(serializers.Serializer):
             first_name=validated_data['first_name'],
             last_name=validated_data['last_name'],
             phone_number=validated_data['phone_number'],
-            birth_date = validated_data['birth_date']
+            #birth_date = validated_data['birth_date']
         )
 
         

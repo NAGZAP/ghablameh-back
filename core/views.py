@@ -8,7 +8,7 @@ from rest_framework import status
 from .tokens import get_tokens
 from .serializers import LoginSerializer,SignUpSerializer
 from ErrorCode import *
-from models import User
+from core.models import User
 from rest_framework import generics
 
 @api_view(['GET'])
@@ -45,23 +45,13 @@ class Authentication(GenericViewSet):
     
     @action(['POST'] , False)
     def signup(self,request):
-        queryset = User.objects.all()
-        serializer = SignUpSerializer
-    
+        
+        serializer = SignUpSerializer(data=request.data)
+        serializer.is_valid()
+        serializer.save()
+
         validated_data = serializer.validated_data
         user = authenticate(username=validated_data["username"],password=validated_data["password"])
-        return Response({"code":successCode,"tokens":get_tokens(user)})
+        return Response({"code":successCode,"tokens":get_tokens(user)},status=status.HTTP_201_CREATED)
 
         
-
-    # serializer.save()
-    
-    
-    # models -> model -> table -> ORM -> [Model].objects
-    # urls routing - request -> function (method) [views] ->
-    # views -> models -> response
-    # example: /users GET -> view -> Class.list() -> view -> User.objects.all() -> response : incorrect
-    # request -> url -> view -> serializer
-    # serializer -> Model
-    # serializer : 1- type checking, json serialize dict-> json, json -> dict, save, update
-    # login save update,check
