@@ -1,15 +1,13 @@
+from ErrorCode import *
 from django.contrib.auth import authenticate
+from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework.viewsets import GenericViewSet,ModelViewSet
+from rest_framework.viewsets import GenericViewSet
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework import status
 from .tokens import get_tokens
-from .serializers import LoginSerializer,SignUpSerializer,UserSerializer
-from ErrorCode import *
-from core.models import User
-from rest_framework import generics
+from .serializers import *
 
 @api_view(['GET'])
 def hello_world(request):
