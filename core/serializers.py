@@ -6,6 +6,13 @@ from rest_framework.validators import UniqueValidator
 from django.contrib.auth.password_validation import validate_password
 
 
+class UserSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = User
+        fields = ['first_name','last_name','username','email','phone_number','date_joined','gender']
+
+
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField(max_length=127)
     password = serializers.CharField(max_length=127)
@@ -22,7 +29,7 @@ class SignUpSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('username', 'password', 'password2', 'email', 'first_name', 'last_name','phone_number')
+        fields = ('username', 'password', 'password2', 'email', 'first_name', 'last_name','phone_number','gender')
         extra_kwargs = {
             'first_name': {'required': True},
             'last_name': {'required': True}
@@ -41,9 +48,8 @@ class SignUpSerializer(serializers.ModelSerializer):
             first_name=validated_data['first_name'],
             last_name=validated_data['last_name'],
             phone_number=validated_data['phone_number'],
-            #birth_date = validated_data['birth_date']
+            gender=validated_data['gender']
         )
-
         
         user.set_password(validated_data['password'])
         user.save()

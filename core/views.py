@@ -6,7 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
 from .tokens import get_tokens
-from .serializers import LoginSerializer,SignUpSerializer
+from .serializers import LoginSerializer,SignUpSerializer,UserSerializer
 from ErrorCode import *
 from core.models import User
 from rest_framework import generics
@@ -15,7 +15,7 @@ from rest_framework import generics
 def hello_world(request):
     return Response({"message": "Hello, world!"})
 
-# /auth/
+
 class Authentication(GenericViewSet):
 
     def get_serializer_class(self):
@@ -24,13 +24,12 @@ class Authentication(GenericViewSet):
         elif self.action== "signup":
             return SignUpSerializer
     
-    # /auth/login
+
     @action(['POST'] , False)
     def login(self,request):
         serializer = LoginSerializer(data=request.data)
-        serializer.is_valid()
+        serializer.is_valid(raise_exception=True)
         validated_data = serializer.validated_data
-        print(validated_data)
         user = authenticate(username=validated_data["username"],password=validated_data["password"])
         if user:
             return Response({"code":successCode
@@ -45,13 +44,15 @@ class Authentication(GenericViewSet):
     
     @action(['POST'] , False)
     def signup(self,request):
-        
         serializer = SignUpSerializer(data=request.data)
-        serializer.is_valid()
-        serializer.save()
-
-        validated_data = serializer.validated_data
-        user = authenticate(username=validated_data["username"],password=validated_data["password"])
-        return Response({"code":successCode,"tokens":get_tokens(user)},status=status.HTTP_201_CREATED)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        return Response(
+            {
+                "user":  UserSerializer(user).data,
+                "code":  successCode,
+                "tokens": get_tokens(user),
+            },
+            status=status.HTTP_201_CREATED)
 
         
