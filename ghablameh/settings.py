@@ -5,7 +5,8 @@ from environ import Env
 env = Env()
 Env.read_env()
 
-VERSION = "1"
+VERSION  = "1"
+BASE_URL = f"api/v{VERSION}"
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 

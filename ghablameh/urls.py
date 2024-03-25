@@ -5,9 +5,9 @@ from django.conf import settings
 from .swagger import schema_view
 
 VERSION = settings.VERSION
+BASE_URL = settings.BASE_URL
 
 
-BASE_URL = f"api/v{VERSION}"
 
 urlpatterns = [
     path(f'{BASE_URL}/swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
