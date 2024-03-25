@@ -5,7 +5,8 @@ from environ import Env
 env = Env()
 Env.read_env()
 
-
+VERSION  = "1"
+BASE_URL = f"api/v{VERSION}"
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -103,11 +104,11 @@ USE_I18N = True
 USE_TZ = True
 
 
-STATIC_URL = 'static/'
+STATIC_URL = f'api/v{VERSION}/static/'
 
 STATIC_ROOT = "/var/www/ghablameh/static"
 
-MEDIA_URL = 'media/'
+MEDIA_URL = f'api/v{VERSION}/media/'
 
 MEDIA_ROOT = "/var/www/ghablameh/media"
 
