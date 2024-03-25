@@ -18,11 +18,11 @@ jobs:
 
       - name: Build Docker images (if using Docker)
         run: |
-          docker-compose build
+          docker-compose -f docker/docker-compose.yaml build
 
       - name: Run tests
         run: |
-          docker-compose run --rm app pytest
+          docker-compose -f docker/docker-compose.yaml run --rm app pytest
 
       - name: Deploy (if deploying to server)
         uses: appleboy/ssh-action@v0.1.2
