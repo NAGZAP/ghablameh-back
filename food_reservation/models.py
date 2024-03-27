@@ -53,7 +53,8 @@ class OrganizationAdmin(models.Model):
 
 
 class Buffet(models.Model):
-    name = models.CharField(max_length=127)
+    name         = models.CharField(max_length=127)
+    organization = models.ForeignKey(Organization,related_name='buffets',on_delete=models.CASCADE)
     # TODO: implement here later 
     
     
