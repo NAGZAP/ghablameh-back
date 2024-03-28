@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'drf_yasg',
     
     'core',
+    'food_reservation',
 ]
 
 MIDDLEWARE = [
