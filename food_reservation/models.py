@@ -23,7 +23,7 @@ class Client(models.Model):
 
 class Organization(models.Model):
     # members ManyToMany
-    # organization_admin OneToOne
+    # admin OneToOne
     name  = models.CharField(max_length=127,unique=True) 
     image = models.ImageField(upload_to='organizations/profile-image',validators=[validators.validate_file_size],null=True, blank=True)
     
@@ -43,7 +43,7 @@ class OrganizationAdmin(models.Model):
     )
     
     user         = models.OneToOneField(settings.AUTH_USER_MODEL,on_delete=models.CASCADE,related_name='organization_admin') 
-    organization = models.OneToOneField(Organization,on_delete=models.CASCADE)
+    organization = models.OneToOneField(Organization,on_delete=models.CASCADE,related_name='admin')
     role         = models.CharField(max_length=1, choices=ROLE_CHOICES, default='O')
     
     created_at = models.DateTimeField(auto_now_add=True)
