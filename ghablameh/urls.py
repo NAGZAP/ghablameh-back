@@ -14,6 +14,7 @@ urlpatterns = [
     path(f'{BASE_URL}/raamfar', admin.site.urls),
     path(f'{BASE_URL}/',include('core.urls')),
     path(f'{BASE_URL}/food-reservation',include('food_reservation.urls')),
+    path(f'{BASE_URL}/userinfo',include('UserInfo.urls')),
 ]\
     + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)\
     + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
