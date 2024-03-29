@@ -28,21 +28,21 @@ class OrganizationChangePasswordSerializer(serializers.Serializer):
         
         return user
 
+class OrganizationSerializer(serializers.ModelSerializer):
+    admin_username = serializers.CharField(max_length=127, required=False)
+    name = serializers.CharField(max_length=127, required=False)
+
+    def validate_name(self, value):
+        print("validating name")
+        print(self.instance.name)
+        if self.instance.name == value:
+            return value
+        
+        if Organization.objects.filter(name=value).exists():
+            raise serializers.ValidationError(f"The name '{value}' is already in use.")
+        return value
     
 
-class OrganizationSerializer(serializers.ModelSerializer):
-    admin_username = serializers.CharField(max_length=127)
-    
-    
-    def validate_admin_username(self, value):
-        if User.objects.filter(username=value).exists():
-            raise serializers.ValidationError("این نام کاربری قبلا استفاده شده است.")
-        
-    def validate_name(self, value):
-        if Organization.objects.filter(name=value).exists():
-            raise serializers.ValidationError("این نام قبلا استفاده شده است.")
-        
-    
     def get_admin_username(self, obj):
         return obj.admin.user.username if obj.admin else None
 
@@ -61,9 +61,11 @@ class OrganizationSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         instance = super().update(instance, validated_data)
         return self.update_admin_username(instance, validated_data)
+
     class Meta:
-        model  = Organization
-        fields = ['id','name','image','admin_username']
+        model = Organization
+        fields = ['id', 'name', 'image', 'admin_username']
+
         
 
         
@@ -83,20 +85,19 @@ class OrganizationLoginSerializer(serializers.Serializer):
     
 
     
-class OrganizationAdminCreateSerializer(serializers.Serializer):
+class OrganizationAdminCreateSerializer(serializers.ModelSerializer):
     username = serializers.CharField(max_length=127)
     password = serializers.CharField(write_only=True,max_length=127)
     organization_name = serializers.CharField(max_length=127)
-    email = serializers.EmailField()
     
     def validate_username(self, value):
         if User.objects.filter(username=value).exists():
-            raise serializers.ValidationError("این نام کاربری قبلا استفاده شده است.")
+            raise serializers.ValidationError(f"{value} کاربری قبلا استفاده شده است.")
         return value
 
     def validate_organization_name(self, value):
         if Organization.objects.filter(name=value).exists():
-            raise serializers.ValidationError("این نام قبلا استفاده شده است.")
+            raise serializers.ValidationError(f"{value} قبلا استفاده شده است.")
         return value
     
     
@@ -112,7 +113,23 @@ class OrganizationAdminCreateSerializer(serializers.Serializer):
             org_admin = OrganizationAdmin.objects.create(organization=org, user=user)
             
         return org_admin
+    
+    class Meta:
+        model  = User
+        fields = ('organization_name','username', 'password', 'email', 'first_name', 'last_name','phone_number')
 
-        
+
+
+class UserSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model  = User
+        fields = ['first_name','last_name','username','email','phone_number','date_joined']
+
+class OrganizationAdminSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+    organization = OrganizationSerializer()
     
-    
+    class Meta:
+        model  = OrganizationAdmin
+        fields = ['id','user','organization','created_at','updated_at','role']

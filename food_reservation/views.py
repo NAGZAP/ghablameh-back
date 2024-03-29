@@ -13,6 +13,7 @@ from .serializers import (
     OrganizationLoginSerializer,
     OrganizationSerializer,
     OrganizationChangePasswordSerializer,
+    OrganizationAdminSerializer,
 )
 
 
@@ -39,7 +40,7 @@ class OrganizationViewSet(
     
     def get_permissions(self):
         if self.action in ['me', 'password']:
-            return [IsOrganizationAdmin]
+            return [IsOrganizationAdmin()]
         else:
             return []
 
@@ -51,7 +52,7 @@ class OrganizationViewSet(
         admin_user = serializer.save()
         
         return Response({
-            "admin_user":admin_user,
+            "admin_user":OrganizationAdminSerializer(admin_user).data,
             'tokens' : get_tokens(admin_user.user),
         },status=status.HTTP_201_CREATED)
         
