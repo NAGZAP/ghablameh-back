@@ -5,7 +5,7 @@ from django.core.validators import RegexValidator
 
 class User(AbstractUser):
     # client OneToOneField
-    # organization_admin OneToOne field
+    # admin OneToOne field
 
     phone_number = models.CharField(
         max_length=20,
