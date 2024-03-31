@@ -8,7 +8,7 @@ class UserSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ['first_name','last_name','username','email','phone_number','date_joined','gender','birthdate']
+        fields = ['first_name','last_name','username','email','phone_number','date_joined']
 
 
 class LoginSerializer(serializers.Serializer):
@@ -27,7 +27,7 @@ class SignUpSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('username', 'password', 'password2', 'email', 'first_name', 'last_name','phone_number','gender','birthdate')
+        fields = ('username', 'password', 'password2', 'email', 'first_name', 'last_name','phone_number')
         extra_kwargs = {
             'first_name': {'required': True},
             'last_name': {'required': True}

@@ -1,10 +1,11 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.core.validators import RegexValidator
-from django.utils.translation import gettext_lazy as _
 
 
 class User(AbstractUser):
+    # client OneToOneField
+    # admin OneToOne field
 
     phone_number = models.CharField(
         max_length=20,
@@ -15,14 +16,7 @@ class User(AbstractUser):
             ),
         ],
         blank=True,
-        null=True
+        null=True,
+        unique=True
     )
-    
-    GENDER_CHOICES = (
-        ('M', _('Male')),
-        ('F', _('Female')),
-        ('O', _('Other')),
-    )
-    gender = models.CharField(max_length=1, choices=GENDER_CHOICES, null=True, blank=True)
-    
-    birthdate = models.DateField(null=True, blank=True)
+    email = models.EmailField(unique=True)
