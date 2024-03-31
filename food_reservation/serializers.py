@@ -1,8 +1,9 @@
 from django.db import transaction
 from django.contrib.auth import get_user_model
+from django.contrib.auth.hashers import check_password
+from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from .models import Organization,OrganizationAdmin
-from django.contrib.auth.hashers import check_password
 
 User = get_user_model()
 
@@ -18,6 +19,10 @@ class OrganizationChangePasswordSerializer(serializers.Serializer):
             raise serializers.ValidationError('لطفا رمز پیشین را به درستی وارد کنید')  
         return value
     
+    def validate_new_password(self, value):
+        validate_password(value)
+        return value
+        
     
     def update(self, instance, validated_data):
         user = instance

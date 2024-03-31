@@ -45,7 +45,7 @@ class TestChangePasswordMyOrganization:
         api_client.force_authenticate(user=org.admin.user)
         data = {
             "old_password": 'a',
-            "new_password": "a"
+            "new_password": "b"
         } 
         
         response = api_client.post(base_organizations_url+"password/",data=data)
