@@ -168,7 +168,7 @@ class ClientChangePasswordSerializer(serializers.Serializer):
 class ClientUpdateSerializer(serializers.ModelSerializer):
    
     birthdate = serializers.DateField()
-    gender = serializers.CharField(max_length=1, choices=Client.GENDER_CHOICES)
+    gender = serializers.CharField(max_length=1)
 
 
     def update(self, instance, validated_data):
@@ -203,7 +203,7 @@ class ClientRegisterSerializer(serializers.ModelSerializer):
 
 
     birthdate = serializers.DateField()
-    gender = serializers.CharField(max_length=1, choices=Client.GENDER_CHOICES)
+    gender = serializers.CharField(max_length=1)
     # def validate_username(self, value):
     #     if User.objects.filter(username=value).exists():
     #         raise serializers.ValidationError(f"{value} کاربری قبلا استفاده شده است.")
@@ -228,7 +228,7 @@ class ClientRegisterSerializer(serializers.ModelSerializer):
     
     class Meta:
         model  = User
-        fields = ('username', 'password', 'email', 'first_name', 'last_name','phone_number')
+        fields = ('username', 'password','gender','birthdate', 'email', 'first_name', 'last_name','phone_number')
 
 
 class ClientSerializer(serializers.ModelSerializer):
@@ -237,25 +237,6 @@ class ClientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client
         fields = '__all__'
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
