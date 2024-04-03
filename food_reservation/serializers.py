@@ -163,13 +163,10 @@ class ClientChangePasswordSerializer(serializers.Serializer):
         
         return user
 
-
-# TODO: ask amirali for me route
 class ClientUpdateSerializer(serializers.ModelSerializer):
    
     birthdate = serializers.DateField()
     gender = serializers.CharField(max_length=1)
-
 
     def update(self, instance, validated_data):
         gender = validated_data.pop('gender',instance.gender)
@@ -182,7 +179,6 @@ class ClientUpdateSerializer(serializers.ModelSerializer):
 
         return instance
     
-
     class Meta:
         model = User
         fields = ['first_name','last_name','username','email','phone_number','date_joined','gender','birthdate']
@@ -192,9 +188,7 @@ class ClientLoginSerializer(serializers.Serializer):
     username = serializers.CharField(max_length=127)
     password = serializers.CharField(max_length=127)
 
-
     def validate(self, attrs):
-        # check username password
         return super().validate(attrs)
 
 
@@ -204,13 +198,6 @@ class ClientRegisterSerializer(serializers.ModelSerializer):
 
     birthdate = serializers.DateField()
     gender = serializers.CharField(max_length=1)
-    # def validate_username(self, value):
-    #     if User.objects.filter(username=value).exists():
-    #         raise serializers.ValidationError(f"{value} کاربری قبلا استفاده شده است.")
-    #     return value
-   
-    
-    
     
     def create(self, validated_data):
         password = validated_data.pop('password')
@@ -218,12 +205,10 @@ class ClientRegisterSerializer(serializers.ModelSerializer):
         birthdate = validated_data.pop('birthdate')
         with transaction.atomic():
             user = User.objects.create(**validated_data)
-            #create client object
             user.set_password(password)
             user.save()
             client  = Client.objects.create(user=user,gender=gender,birthdate=birthdate)
-            
-            
+    
         return client
     
     class Meta:
@@ -232,6 +217,7 @@ class ClientRegisterSerializer(serializers.ModelSerializer):
 
 
 class ClientSerializer(serializers.ModelSerializer):
+
     user = UserSerializer()
     organizations = OrganizationSerializer(many=True)
     class Meta:
@@ -242,8 +228,6 @@ class ClientSerializer(serializers.ModelSerializer):
 
 class BuffetSerializer(serializers.ModelSerializer):
 
-
-
     class Meta:
         model  = Buffet
         fields = '__all__'
@@ -251,8 +235,6 @@ class BuffetSerializer(serializers.ModelSerializer):
 
 
 class BuffetListSerializer(serializers.ModelSerializer):
-
-
 
     class Meta:
         model  = Buffet

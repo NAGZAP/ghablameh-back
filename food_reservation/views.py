@@ -100,8 +100,6 @@ class ClientViewSet(GenericViewSet):
             return ClientUpdateSerializer
         if action == 'password':
             return ClientChangePasswordSerializer
-        
-
     
     def get_permissions(self):
         if self.action in ['me', 'password']:
@@ -109,22 +107,6 @@ class ClientViewSet(GenericViewSet):
         else:
             return []
     
-    # organizations/
-
-    # / GET list  
-    # /login
-    # /register
-    # /me PUT,GET
-    # /password POST
-
-
-    # /clients/me  PUT,GET
-    # /clients/password POST
-    # /clients/login
-    # /clients/register
-
-
-
     @action(['POST'] , False)
     def login(self,requset):
         serializer = ClientLoginSerializer(data=requset.data)
@@ -140,6 +122,7 @@ class ClientViewSet(GenericViewSet):
 
     @action(['POST'] , False)
     def register(self,requset):
+
         serializer = ClientRegisterSerializer(data=requset.data)
         serializer.is_valid(raise_exception=True)
         client = serializer.save()
@@ -154,6 +137,7 @@ class ClientViewSet(GenericViewSet):
 
     @action(['GET','PUT'] , False)
     def me(self,request):
+
         instance = request.user.client
 
         if request.method == 'PUT':
@@ -162,13 +146,13 @@ class ClientViewSet(GenericViewSet):
             instance = serializer.save()
 
         serializer = ClientSerializer(instance)
-                
         return Response(serializer.data)
 
 
 
     @action(['POST'] , False)
     def password(self,request):
+
         serializer = ClientChangePasswordSerializer(request.user,data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -177,10 +161,11 @@ class ClientViewSet(GenericViewSet):
 
 
 class BuffetViewSet(ModelViewSet):
-    # /buffets/3 DELETE
+
     serializer_class = BuffetSerializer
 
     def get_permissions(self):
+
         if self.action in ['list', 'retrieve']:
             return [IsAuthenticated()]
         else:
@@ -188,10 +173,10 @@ class BuffetViewSet(ModelViewSet):
         
 
     def get_queryset(self):
+
         org = self.request.user.organization_admin.organization
         if hasattr(self.request.user,'organizaion_admin'):
             return Buffet.objects.filter(organization=org).all()
-        # return 
 
     
         
