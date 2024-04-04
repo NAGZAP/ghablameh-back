@@ -81,7 +81,7 @@ class ClientRegisterSerializer(serializers.ModelSerializer):
 
 
     birthdate = serializers.DateField()
-    gender = serializers.CharField(max_length=1)
+    gender = serializers.ChoiceField(choices=Client.GENDER_CHOICES)
     
     def create(self, validated_data):
         password = validated_data.pop('password')
