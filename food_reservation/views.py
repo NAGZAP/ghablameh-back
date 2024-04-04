@@ -174,15 +174,28 @@ class BuffetViewSet(ModelViewSet):
         else:
             return [IsAuthenticated(),IsOrganizationAdmin()]
         
+    def get_serializer_class(self):
+        if self.action in ['list']:
+            return BuffetListSerializer
+        return BuffetSerializer
+        
 
     def get_queryset(self):
-
-        org = self.request.user.organization_admin.organization
-        if hasattr(self.request.user,'organizaion_admin'):
+        # Organization Admin
+        if hasattr(self.request.user,'organization_admin'):
+            org = self.request.user.organization_admin.organization
             return Buffet.objects.filter(organization=org).all()
-
-    
+        # Client
+        return Buffet.objects.filter(
+            organization__in=self.request.user.client.organizations.all())\
+            .all()
+            
+    def perform_create(self, serializer):
+        org = self.request.user.organization_admin.organization
+        serializer.save(organization=org)
         
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
 
     
         
