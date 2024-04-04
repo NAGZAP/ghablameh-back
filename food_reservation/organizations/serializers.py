@@ -39,47 +39,44 @@ class OrganizationChangePasswordSerializer(serializers.Serializer):
         return user
 
 class OrganizationSerializer(serializers.ModelSerializer):
-    admin_username = serializers.CharField(max_length=127, required=False)
-    name = serializers.CharField(max_length=127, required=False)
-
-    def validate_name(self, value):
-        if self.instance.name == value:
-            return value
-        if Organization.objects.filter(name=value).exists():
-            raise serializers.ValidationError(f"این نام سازمان '{value}' قبلا استفاده شده است.")
-        return value
+    admin_username = serializers.CharField(source='admin.user.username')
+    admin_first_name = serializers.CharField(source='admin.user.first_name')
+    admin_last_name = serializers.CharField(source='admin.user.last_name')
+    admin_email = serializers.EmailField(source='admin.user.email')
+    admin_phone_number = serializers.CharField(source='admin.user.phone_number')
     
     def validate_admin_username(self, value):
-        if self.instance.admin.user.username == value:
-            return value
-        if User.objects.filter(username=value).exists():
-            raise serializers.ValidationError(f"این نام کاربری '{value}' قبلا استفاده شده است.")
+        if self.instance.admin.user.username != value and User.objects.filter(username=value).exists():
+            raise serializers.ValidationError(f"{value} کاربری قبلا استفاده شده است.")
         return value
-        
     
-
-    def get_admin_username(self, obj):
-        return obj.admin.user.username if obj.admin else None
-
-    def update_admin_username(self, instance, validated_data):
-        admin_username = validated_data.get('admin_username')
-        if admin_username:
-            instance.admin.user.username = admin_username
-            instance.admin.user.save()
-        return instance
-
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        data['admin_username'] = self.get_admin_username(instance)
-        return data
-
+    def validate_admin_email(self, value):
+        if self.instance.admin.user.email != value and User.objects.filter(email=value).exists():
+            raise serializers.ValidationError(f"{value} ایمیل قبلا استفاده شده است.")
+        return value
+    
+    def validate_admin_phone_number(self, value):
+        if self.instance.admin.user.phone_number != value and User.objects.filter(phone_number=value).exists():
+            raise serializers.ValidationError(f"{value} شماره تلفن قبلا استفاده شده است.")
+        return value
+    
+    
     def update(self, instance, validated_data):
-        instance = super().update(instance, validated_data)
-        return self.update_admin_username(instance, validated_data)
-
+        user = instance.admin.user
+        user_data = validated_data.pop('admin').pop('user')
+        user.username = user_data.get('username',user.username)
+        user.first_name = user_data.get('first_name',user.first_name)
+        user.last_name = user_data.get('last_name',user.last_name)
+        user.email = user_data.get('email',user.email)
+        user.phone_number = user_data.get('phone_number',user.phone_number)
+        user.save()
+        
+        super().update(instance, validated_data)
+        return instance    
+    
     class Meta:
         model = Organization
-        fields = ['id', 'name', 'image', 'admin_username']
+        fields = ['id', 'name', 'image', 'admin_username', 'admin_first_name', 'admin_last_name', 'admin_email', 'admin_phone_number', 'created_at', 'updated_at']
 
     
 class OrganizationListSerializer(serializers.ModelSerializer):
