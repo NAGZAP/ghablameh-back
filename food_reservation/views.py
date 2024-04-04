@@ -103,8 +103,8 @@ class ClientViewSet(GenericViewSet):
             return []
     
     @action(['POST'] , False)
-    def login(self,requset):
-        serializer = ClientLoginSerializer(data=requset.data)
+    def login(self,request):
+        serializer = ClientLoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         return Response(serializer.data)
         
@@ -128,11 +128,8 @@ class ClientViewSet(GenericViewSet):
 
     @action(['GET','PUT'] , False)
     def me(self,request):
-
         instance = request.user.client
-
         if request.method == 'PUT':
-            # serializer = ClientUpdateSerializer(instance,data=request.data)
             serializer = ClientSerializer(instance,data=request.data)
             serializer.is_valid(raise_exception=True)
             instance = serializer.save()
