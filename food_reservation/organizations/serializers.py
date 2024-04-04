@@ -47,8 +47,13 @@ class OrganizationSerializer(serializers.ModelSerializer):
     admin_last_name = serializers.CharField(source='admin.user.last_name')
     admin_email = serializers.EmailField(source='admin.user.email')
     admin_phone_number = serializers.CharField(source='admin.user.phone_number')
-    image_base64 = serializers.CharField(write_only=True)
-    image_url = serializers.CharField(source='image.url',read_only=True)
+    image_base64 = serializers.CharField(required=False,write_only=True)
+    image_url = serializers.SerializerMethodField('get_image_url')
+    
+    def get_image_url(self, obj):
+        if obj.image:
+            return obj.image.url
+        return None
     
     
     def validate_admin_username(self, value):

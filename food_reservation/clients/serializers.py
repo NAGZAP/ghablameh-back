@@ -91,8 +91,13 @@ class ClientSerializer(serializers.ModelSerializer):
     phone_number = serializers.CharField(source='user.phone_number')
     date_joined = serializers.DateTimeField(source='user.date_joined',read_only=True)
     organizations = OrganizationSerializer(many=True,read_only=True)
-    image_base64 = serializers.CharField()
-    image_url = serializers.CharField(source='image.url',read_only=True)
+    image_base64 = serializers.CharField(required=False,write_only=True)
+    image_url = serializers.SerializerMethodField('get_image_url')
+    
+    def get_image_url(self, obj):
+        if obj.image:
+            return obj.image.url
+        return None
     class Meta:
         model = Client
         fields = ['id','image_base64','image_url','gender','birthdate','first_name','last_name','username','email','phone_number','date_joined','organizations','created_at','updated_at']
