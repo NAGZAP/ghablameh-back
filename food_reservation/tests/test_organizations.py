@@ -148,9 +148,13 @@ class TestUpdateMyOrganization:
         org       = baker.make(Organization,admin=org_admin)
         api_client.force_authenticate(user=org.admin.user)
         data = {
-            "name": 'a',
-            "admin_username": "b"
-        } 
+            "name": "s",
+            "admin_username": "s",
+            "admin_first_name": "u",
+            "admin_last_name": "u",
+            "admin_email": "s@e.com",
+            "admin_phone_number": "090291312313"
+        }
         
         response = api_client.put(base_organizations_url+"me/",data=data)
         
@@ -254,7 +258,7 @@ class TestLoginOrganization:
         
         response = api_client.post(base_organizations_url+'login/',data=data)
         
-        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert 'tokens' not in response.data
         
         
