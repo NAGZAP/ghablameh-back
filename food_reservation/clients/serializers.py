@@ -7,6 +7,7 @@ from food_reservation.models import Buffet,Client
 from django.contrib.auth.hashers import check_password
 from food_reservation.serializers import UserSerializer
 from food_reservation.organizations.serializers import OrganizationSerializer
+from food_reservation.tokens import get_tokens
 
 User = get_user_model()
 
@@ -21,6 +22,10 @@ class ClientChangePasswordSerializer(serializers.Serializer):
         user = self.instance
         if not check_password(value,user.password):
             raise serializers.ValidationError('لطفا رمز پیشین را به درستی وارد کنید')  
+        return value
+    
+    def validate_new_password(self, value):
+        validate_password(value)
         return value
     
     
@@ -59,9 +64,18 @@ class ClientLoginSerializer(serializers.Serializer):
     password = serializers.CharField(max_length=127)
 
     def validate(self, attrs):
-        return super().validate(attrs)
-
-
+        username = attrs.get('username')
+        password = attrs.get('password')
+        user = User.objects.filter(username=username).first()
+        if user and hasattr(user, 'client') and user.check_password(password):
+            attrs['tokens'] = get_tokens(user)
+            return attrs
+        raise serializers.ValidationError('نام کاربری یا رمز عبور اشتباه است')
+        
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        ret['tokens'] = instance.pop('tokens')
+        return ret
 
 class ClientRegisterSerializer(serializers.ModelSerializer):
 

@@ -58,13 +58,7 @@ class OrganizationViewSet(
     def login(self,request):
         serializer = OrganizationLoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        validated_data = serializer.validated_data
-        user = authenticate(username=validated_data["username"],password=validated_data["password"])
-        if user and hasattr(user, 'organization_admin'):
-            return Response( { "tokens":get_tokens(user)})
-        elif user:
-            return Response( {"message":"امکان لاگین به عنوان ادمین سازمان وجود ندارد" },status=status.HTTP_403_FORBIDDEN)
-        return Response( {"message":"نام کاربری یا رمز عبور اشتباه است" },status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.data)
         
         
         
@@ -114,19 +108,15 @@ class ClientViewSet(GenericViewSet):
     def login(self,requset):
         serializer = ClientLoginSerializer(data=requset.data)
         serializer.is_valid(raise_exception=True)
-        validated_data = serializer.validated_data
-        user = authenticate(username=validated_data["username"],password=validated_data["password"])
-        if user:
-            return Response( { "tokens":get_tokens(user)})
-        return Response( {"message":"نام کاربری یا رمز عبور اشتباه است" },status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.data)
         
         
     
 
     @action(['POST'] , False)
-    def register(self,requset):
+    def register(self, request):
 
-        serializer = ClientRegisterSerializer(data=requset.data)
+        serializer = ClientRegisterSerializer(data = request.data)
         serializer.is_valid(raise_exception=True)
         client = serializer.save()
         

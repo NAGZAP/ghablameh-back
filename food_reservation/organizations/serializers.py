@@ -6,6 +6,7 @@ from rest_framework import serializers
 from food_reservation.models import Organization,OrganizationAdmin
 from django.contrib.auth.hashers import check_password
 from food_reservation.serializers import UserSerializer
+from food_reservation.tokens import get_tokens
 
 User = get_user_model()
 
@@ -95,10 +96,22 @@ class OrganizationLoginSerializer(serializers.Serializer):
 
 
     def validate(self, attrs):
-        # check username password
-        return super().validate(attrs)
-    
+        username = attrs.get('username')
+        password = attrs.get('password')
+        user = User.objects.filter(username=username).first()
+        if user and user.check_password(password):
+            if hasattr(user, 'organization_admin'):
+                attrs['tokens'] = get_tokens(user)
+                return attrs
+            else:
+                raise serializers.ValidationError('امکان لاگین به عنوان ادمین سازمان وجود ندارد')
+        raise serializers.ValidationError('نام کاربری یا رمز عبور اشتباه است')
 
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        ret['tokens'] = instance.pop('tokens')
+        return ret
     
 class OrganizationAdminCreateSerializer(serializers.ModelSerializer):
     username = serializers.CharField(max_length=127)

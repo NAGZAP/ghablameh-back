@@ -254,7 +254,7 @@ class TestLoginOrganization:
         
         response = api_client.post(base_organizations_url+'login/',data=data)
         
-        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert 'tokens' not in response.data
         
         
