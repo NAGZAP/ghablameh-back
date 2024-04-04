@@ -101,10 +101,14 @@ class ClientRegisterSerializer(serializers.ModelSerializer):
 
 
 class ClientSerializer(serializers.ModelSerializer):
-
-    user = UserSerializer()
+    first_name = serializers.CharField(source='user.first_name')
+    last_name = serializers.CharField(source='user.last_name')
+    username = serializers.CharField(source='user.username')
+    email = serializers.EmailField(source='user.email')
+    phone_number = serializers.CharField(source='user.phone_number')
+    date_joined = serializers.DateTimeField(source='user.date_joined')
     organizations = OrganizationSerializer(many=True)
     class Meta:
         model = Client
-        fields = '__all__'
+        fields = ['id','image','gender','birthdate','first_name','last_name','username','email','phone_number','date_joined','organizations','created_at','updated_at']
 
