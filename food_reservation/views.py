@@ -3,11 +3,12 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet,ModelViewSet
 from rest_framework.decorators import action 
-from django.contrib.auth import authenticate
 from rest_framework.permissions import IsAuthenticated
 from .permissions import *
 from .tokens import get_tokens
 from .models import (Organization,Client,Buffet)
+from food_reservation.clients.serializers import *
+from food_reservation.organizations.serializers import *
 from .serializers import *
 from ErrorCode import *
 
@@ -57,13 +58,7 @@ class OrganizationViewSet(
     def login(self,request):
         serializer = OrganizationLoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        validated_data = serializer.validated_data
-        user = authenticate(username=validated_data["username"],password=validated_data["password"])
-        if user and hasattr(user, 'organization_admin'):
-            return Response( { "tokens":get_tokens(user)})
-        elif user:
-            return Response( {"message":"امکان لاگین به عنوان ادمین سازمان وجود ندارد" },status=status.HTTP_403_FORBIDDEN)
-        return Response( {"message":"نام کاربری یا رمز عبور اشتباه است" },status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.data)
         
         
         
@@ -97,9 +92,7 @@ class ClientViewSet(GenericViewSet):
         if action == 'login':
             return ClientLoginSerializer
         if action == 'me':
-            if self.request.method == 'GET':
-                return ClientSerializer           
-            return ClientUpdateSerializer
+            return ClientSerializer           
         if action == 'password':
             return ClientChangePasswordSerializer
     
@@ -110,27 +103,23 @@ class ClientViewSet(GenericViewSet):
             return []
     
     @action(['POST'] , False)
-    def login(self,requset):
-        serializer = ClientLoginSerializer(data=requset.data)
+    def login(self,request):
+        serializer = ClientLoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        validated_data = serializer.validated_data
-        user = authenticate(username=validated_data["username"],password=validated_data["password"])
-        if user:
-            return Response( { "tokens":get_tokens(user)})
-        return Response( {"message":"نام کاربری یا رمز عبور اشتباه است" },status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.data)
         
         
     
 
     @action(['POST'] , False)
-    def register(self,requset):
+    def register(self, request):
 
-        serializer = ClientRegisterSerializer(data=requset.data)
+        serializer = ClientRegisterSerializer(data = request.data)
         serializer.is_valid(raise_exception=True)
         client = serializer.save()
         
         return Response({
-            "client":ClientSerializer(client).data,
+            **ClientSerializer(client).data,
             'tokens' : get_tokens(client.user),
         },status=status.HTTP_201_CREATED)
     
@@ -139,11 +128,9 @@ class ClientViewSet(GenericViewSet):
 
     @action(['GET','PUT'] , False)
     def me(self,request):
-
         instance = request.user.client
-
         if request.method == 'PUT':
-            serializer = ClientUpdateSerializer(instance,data=request.data)
+            serializer = ClientSerializer(instance,data=request.data)
             serializer.is_valid(raise_exception=True)
             instance = serializer.save()
 
@@ -173,15 +160,28 @@ class BuffetViewSet(ModelViewSet):
         else:
             return [IsAuthenticated(),IsOrganizationAdmin()]
         
+    def get_serializer_class(self):
+        if self.action in ['list']:
+            return BuffetListSerializer
+        return BuffetSerializer
+        
 
     def get_queryset(self):
-
-        org = self.request.user.organization_admin.organization
-        if hasattr(self.request.user,'organizaion_admin'):
+        # Organization Admin
+        if hasattr(self.request.user,'organization_admin'):
+            org = self.request.user.organization_admin.organization
             return Buffet.objects.filter(organization=org).all()
-
-    
+        # Client
+        return Buffet.objects.filter(
+            organization__in=self.request.user.client.organizations.all())\
+            .all()
+            
+    def perform_create(self, serializer):
+        org = self.request.user.organization_admin.organization
+        serializer.save(organization=org)
         
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
 
     
         
