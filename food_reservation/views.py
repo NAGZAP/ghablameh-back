@@ -8,7 +8,8 @@ from rest_framework.permissions import IsAuthenticated
 from .permissions import *
 from .tokens import get_tokens
 from .models import (Organization,Client,Buffet)
-from .serializers import *
+from food_reservation.clients.serializers import *
+from food_reservation.organizations.serializers import *
 from ErrorCode import *
 
 
