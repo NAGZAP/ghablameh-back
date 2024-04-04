@@ -122,7 +122,7 @@ class ClientViewSet(GenericViewSet):
         client = serializer.save()
         
         return Response({
-            "client":ClientSerializer(client).data,
+            **ClientSerializer(client).data,
             'tokens' : get_tokens(client.user),
         },status=status.HTTP_201_CREATED)
     
