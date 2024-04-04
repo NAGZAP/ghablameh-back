@@ -1,5 +1,7 @@
 from django.db import transaction
 from django.contrib.auth import get_user_model
+from django.contrib.auth.hashers import check_password
+from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from .models import Organization,OrganizationAdmin, Buffet,Client
 from django.contrib.auth.hashers import check_password
@@ -21,6 +23,10 @@ class OrganizationChangePasswordSerializer(serializers.Serializer):
             raise serializers.ValidationError('لطفا رمز پیشین را به درستی وارد کنید')  
         return value
     
+    def validate_new_password(self, value):
+        validate_password(value)
+        return value
+        
     
     def update(self, instance, validated_data):
         user = instance
@@ -36,14 +42,19 @@ class OrganizationSerializer(serializers.ModelSerializer):
     name = serializers.CharField(max_length=127, required=False)
 
     def validate_name(self, value):
-        print("validating name")
-        print(self.instance.name)
         if self.instance.name == value:
             return value
-        
         if Organization.objects.filter(name=value).exists():
-            raise serializers.ValidationError(f"The name '{value}' is already in use.")
+            raise serializers.ValidationError(f"این نام سازمان '{value}' قبلا استفاده شده است.")
         return value
+    
+    def validate_admin_username(self, value):
+        if self.instance.admin.user.username == value:
+            return value
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError(f"این نام کاربری '{value}' قبلا استفاده شده است.")
+        return value
+        
     
 
     def get_admin_username(self, obj):

@@ -59,8 +59,10 @@ class OrganizationViewSet(
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.validated_data
         user = authenticate(username=validated_data["username"],password=validated_data["password"])
-        if user:
+        if user and hasattr(user, 'organization_admin'):
             return Response( { "tokens":get_tokens(user)})
+        elif user:
+            return Response( {"message":"امکان لاگین به عنوان ادمین سازمان وجود ندارد" },status=status.HTTP_403_FORBIDDEN)
         return Response( {"message":"نام کاربری یا رمز عبور اشتباه است" },status=status.HTTP_400_BAD_REQUEST)
         
         
