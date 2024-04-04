@@ -14,10 +14,11 @@ class UserSerializer(serializers.ModelSerializer):
         
         
 class BuffetSerializer(serializers.ModelSerializer):
+    organization_name = serializers.CharField(source='organization.name', read_only=True)
 
     class Meta:
         model  = Buffet
-        fields = '__all__'
+        fields = ['id', 'name', 'created_at', 'updated_at', 'organization_name']
 
 
 
