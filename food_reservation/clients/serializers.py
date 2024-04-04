@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import check_password
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
-from food_reservation.models import Buffet,Client
+from food_reservation.models import Client
 from django.contrib.auth.hashers import check_password
 from food_reservation.serializers import UserSerializer
 from food_reservation.organizations.serializers import OrganizationSerializer
@@ -108,18 +108,3 @@ class ClientSerializer(serializers.ModelSerializer):
         model = Client
         fields = '__all__'
 
-
-
-class BuffetSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model  = Buffet
-        fields = '__all__'
-
-
-
-class BuffetListSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model  = Buffet
-        fields = ['id','name']

@@ -10,6 +10,7 @@ from .tokens import get_tokens
 from .models import (Organization,Client,Buffet)
 from food_reservation.clients.serializers import *
 from food_reservation.organizations.serializers import *
+from .serializers import *
 from ErrorCode import *
 
 
