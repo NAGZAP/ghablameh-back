@@ -3,7 +3,6 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet,ModelViewSet
 from rest_framework.decorators import action 
-from django.contrib.auth import authenticate
 from rest_framework.permissions import IsAuthenticated
 from .permissions import *
 from .tokens import get_tokens
@@ -93,9 +92,7 @@ class ClientViewSet(GenericViewSet):
         if action == 'login':
             return ClientLoginSerializer
         if action == 'me':
-            if self.request.method == 'GET':
-                return ClientSerializer           
-            return ClientUpdateSerializer
+            return ClientSerializer           
         if action == 'password':
             return ClientChangePasswordSerializer
     
@@ -135,7 +132,8 @@ class ClientViewSet(GenericViewSet):
         instance = request.user.client
 
         if request.method == 'PUT':
-            serializer = ClientUpdateSerializer(instance,data=request.data)
+            # serializer = ClientUpdateSerializer(instance,data=request.data)
+            serializer = ClientSerializer(instance,data=request.data)
             serializer.is_valid(raise_exception=True)
             instance = serializer.save()
 

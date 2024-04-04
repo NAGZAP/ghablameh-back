@@ -38,26 +38,6 @@ class ClientChangePasswordSerializer(serializers.Serializer):
         
         return user
 
-class ClientUpdateSerializer(serializers.ModelSerializer):
-   
-    birthdate = serializers.DateField()
-    gender = serializers.CharField(max_length=1)
-
-    def update(self, instance, validated_data):
-        gender = validated_data.pop('gender',instance.gender)
-        birthdate = validated_data.pop('birthdate',instance.birthdate)
-        instance.gender = gender
-        instance.birthdate = birthdate
-
-        instance = super().update(instance.user, validated_data)
-        instance.save()
-
-        return instance
-    
-    class Meta:
-        model = User
-        fields = ['first_name','last_name','username','email','phone_number','date_joined','gender','birthdate']
-
         
 class ClientLoginSerializer(serializers.Serializer):
     username = serializers.CharField(max_length=127)
@@ -106,9 +86,41 @@ class ClientSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username')
     email = serializers.EmailField(source='user.email')
     phone_number = serializers.CharField(source='user.phone_number')
-    date_joined = serializers.DateTimeField(source='user.date_joined')
-    organizations = OrganizationSerializer(many=True)
+    date_joined = serializers.DateTimeField(source='user.date_joined',read_only=True)
+    organizations = OrganizationSerializer(many=True,read_only=True)
     class Meta:
         model = Client
         fields = ['id','image','gender','birthdate','first_name','last_name','username','email','phone_number','date_joined','organizations','created_at','updated_at']
+        
+        
+        
+    
+    def update(self, instance, validated_data):
+        user = instance.user
+        user_data = validated_data.pop('user',{})
+        user.first_name = user_data.get('first_name',user.first_name)
+        user.last_name = user_data.get('last_name',user.last_name)
+        user.username = user_data.get('username',user.username)
+        user.email = user_data.get('email',user.email)
+        user.phone_number = user_data.get('phone_number',user.phone_number)
+        user.save()
+
+        super().update(instance, validated_data)
+
+        return instance
+    
+    def validate_username(self,value):
+        if self.instance.user.username != value and User.objects.filter(username=value).exists():
+            raise serializers.ValidationError('نام کاربری تکراری است')
+        return value
+    
+    def validate_email(self,value):
+        if self.instance.user.email != value and User.objects.filter(email=value).exists():
+            raise serializers.ValidationError('ایمیل تکراری است')
+        return value
+    
+    def validate_phone_number(self,value):
+        if self.instance.user.phone_number != value and User.objects.filter(phone_number=value).exists():
+            raise serializers.ValidationError('شماره تلفن تکراری است')
+        return value
 
