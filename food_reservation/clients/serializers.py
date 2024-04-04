@@ -1,3 +1,6 @@
+import base64
+import uuid
+from django.core.files.base import ContentFile
 from django.db import transaction
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import check_password
@@ -88,9 +91,11 @@ class ClientSerializer(serializers.ModelSerializer):
     phone_number = serializers.CharField(source='user.phone_number')
     date_joined = serializers.DateTimeField(source='user.date_joined',read_only=True)
     organizations = OrganizationSerializer(many=True,read_only=True)
+    image_base64 = serializers.CharField()
+    image_url = serializers.CharField(source='image.url',read_only=True)
     class Meta:
         model = Client
-        fields = ['id','image','gender','birthdate','first_name','last_name','username','email','phone_number','date_joined','organizations','created_at','updated_at']
+        fields = ['id','image_base64','image_url','gender','birthdate','first_name','last_name','username','email','phone_number','date_joined','organizations','created_at','updated_at']
         
         
         
@@ -104,6 +109,15 @@ class ClientSerializer(serializers.ModelSerializer):
         user.email = user_data.get('email',user.email)
         user.phone_number = user_data.get('phone_number',user.phone_number)
         user.save()
+        image_data = validated_data.pop('image_base64',None)
+        if image_data is not None:
+            if image_data is not None:
+                format, imgstr = image_data.split(';base64,') 
+                ext = format.split('/')[-1] 
+                data = ContentFile(base64.b64decode(imgstr), name=f'{uuid.uuid4()}.{ext}')
+                instance.image.save(data.name, data, save=True)
+
+            
 
         super().update(instance, validated_data)
 

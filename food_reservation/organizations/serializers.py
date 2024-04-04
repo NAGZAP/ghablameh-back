@@ -1,3 +1,6 @@
+import base64
+import uuid
+from django.core.files.base import ContentFile
 from django.db import transaction
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import check_password
@@ -44,6 +47,9 @@ class OrganizationSerializer(serializers.ModelSerializer):
     admin_last_name = serializers.CharField(source='admin.user.last_name')
     admin_email = serializers.EmailField(source='admin.user.email')
     admin_phone_number = serializers.CharField(source='admin.user.phone_number')
+    image_base64 = serializers.CharField(write_only=True)
+    image_url = serializers.CharField(source='image.url',read_only=True)
+    
     
     def validate_admin_username(self, value):
         if self.instance.admin.user.username != value and User.objects.filter(username=value).exists():
@@ -71,12 +77,22 @@ class OrganizationSerializer(serializers.ModelSerializer):
         user.phone_number = user_data.get('phone_number',user.phone_number)
         user.save()
         
+        image_data = validated_data.pop('image_base64',None)
+        if image_data is not None:
+            if image_data is not None:
+                format, imgstr = image_data.split(';base64,') 
+                ext = format.split('/')[-1] 
+                data = ContentFile(base64.b64decode(imgstr), name=f'{uuid.uuid4()}.{ext}')
+                instance.image.save(data.name, data, save=True)
+
+            
+        
         super().update(instance, validated_data)
         return instance    
     
     class Meta:
         model = Organization
-        fields = ['id', 'name', 'image', 'admin_username', 'admin_first_name', 'admin_last_name', 'admin_email', 'admin_phone_number', 'created_at', 'updated_at']
+        fields = ['id', 'name', 'image_base64','image_url', 'admin_username', 'admin_first_name', 'admin_last_name', 'admin_email', 'admin_phone_number', 'created_at', 'updated_at']
 
     
 class OrganizationListSerializer(serializers.ModelSerializer):
