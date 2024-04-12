@@ -3,7 +3,6 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet,ModelViewSet
 from rest_framework.decorators import action 
-from rest_framework.permissions import IsAuthenticated
 from .permissions import *
 from .tokens import get_tokens
 from .models import (Organization,Client,Buffet)
@@ -98,7 +97,7 @@ class ClientViewSet(GenericViewSet):
     
     def get_permissions(self):
         if self.action in ['me', 'password']:
-            return [IsAuthenticated(),IsNotOrganizationAdmin()]
+            return [IsClient(),IsNotOrganizationAdmin()]
         else:
             return []
     
@@ -156,9 +155,9 @@ class BuffetViewSet(ModelViewSet):
     def get_permissions(self):
 
         if self.action in ['list', 'retrieve']:
-            return [IsAuthenticated()]
+            return [IsClient()]
         else:
-            return [IsAuthenticated(),IsOrganizationAdmin()]
+            return [IsClient(),IsOrganizationAdmin()]
         
     def get_serializer_class(self):
         if self.action in ['list']:
