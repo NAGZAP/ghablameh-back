@@ -26,8 +26,6 @@ class OrganizationViewSet(
             return OrganizationListSerializer
         if action == 'register':
             return OrganizationAdminCreateSerializer
-        if action == 'login':
-            return OrganizationLoginSerializer
         if action == 'me':
             return OrganizationSerializer
         if action == 'password':
@@ -50,15 +48,7 @@ class OrganizationViewSet(
             "admin_user":OrganizationAdminSerializer(admin_user).data,
             'tokens' : get_tokens(admin_user.user),
         },status=status.HTTP_201_CREATED)
-        
-
     
-    @action(['POST'] , False)
-    def login(self,request):
-        serializer = OrganizationLoginSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        return Response(serializer.data)
-        
         
         
     @action(['GET','PUT'] , False)
@@ -88,8 +78,6 @@ class ClientViewSet(GenericViewSet):
         action = self.action
         if action == 'register':
             return ClientRegisterSerializer
-        if action == 'login':
-            return ClientLoginSerializer
         if action == 'me':
             return ClientSerializer           
         if action == 'password':
@@ -101,11 +89,6 @@ class ClientViewSet(GenericViewSet):
         else:
             return []
     
-    @action(['POST'] , False)
-    def login(self,request):
-        serializer = ClientLoginSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        return Response(serializer.data)
         
         
     
