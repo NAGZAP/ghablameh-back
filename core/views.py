@@ -35,22 +35,3 @@ class Authentication(GenericViewSet):
                              })
         return Response({"code":successCode
                             ,"message":"username or password not correct"},status=status.HTTP_400_BAD_REQUEST)
-        
-        
-        
-    
-    
-    @action(['POST'] , False)
-    def signup(self,request):
-        serializer = SignUpSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-        return Response(
-            {
-                "user":  UserSerializer(user).data,
-                "code":  successCode,
-                "tokens": get_tokens(user),
-            },
-            status=status.HTTP_201_CREATED)
-
-        

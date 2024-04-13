@@ -18,3 +18,13 @@ class IsNotOrganizationAdmin(BasePermission):
 
     def has_permission(self, request, view):
         return request.user.is_authenticated and not hasattr(request.user, 'organization_admin')
+    
+
+
+class IsClient(BasePermission):
+    """
+    Custom permission to only allow organization admins to access.
+    """
+
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and hasattr(request.user, 'client')

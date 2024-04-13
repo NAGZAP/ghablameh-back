@@ -3,7 +3,6 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet,ModelViewSet
 from rest_framework.decorators import action 
-from rest_framework.permissions import IsAuthenticated
 from .permissions import *
 from .tokens import get_tokens
 from .models import (Organization,Client,Buffet)
@@ -27,8 +26,6 @@ class OrganizationViewSet(
             return OrganizationListSerializer
         if action == 'register':
             return OrganizationAdminCreateSerializer
-        if action == 'login':
-            return OrganizationLoginSerializer
         if action == 'me':
             return OrganizationSerializer
         if action == 'password':
@@ -51,15 +48,7 @@ class OrganizationViewSet(
             "admin_user":OrganizationAdminSerializer(admin_user).data,
             'tokens' : get_tokens(admin_user.user),
         },status=status.HTTP_201_CREATED)
-        
-
     
-    @action(['POST'] , False)
-    def login(self,request):
-        serializer = OrganizationLoginSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        return Response(serializer.data)
-        
         
         
     @action(['GET','PUT'] , False)
@@ -89,8 +78,6 @@ class ClientViewSet(GenericViewSet):
         action = self.action
         if action == 'register':
             return ClientRegisterSerializer
-        if action == 'login':
-            return ClientLoginSerializer
         if action == 'me':
             return ClientSerializer           
         if action == 'password':
@@ -98,15 +85,10 @@ class ClientViewSet(GenericViewSet):
     
     def get_permissions(self):
         if self.action in ['me', 'password']:
-            return [IsAuthenticated(),IsNotOrganizationAdmin()]
+            return [IsClient(),IsNotOrganizationAdmin()]
         else:
             return []
     
-    @action(['POST'] , False)
-    def login(self,request):
-        serializer = ClientLoginSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        return Response(serializer.data)
         
         
     
@@ -156,9 +138,9 @@ class BuffetViewSet(ModelViewSet):
     def get_permissions(self):
 
         if self.action in ['list', 'retrieve']:
-            return [IsAuthenticated()]
+            return [IsClient()]
         else:
-            return [IsAuthenticated(),IsOrganizationAdmin()]
+            return [IsClient(),IsOrganizationAdmin()]
         
     def get_serializer_class(self):
         if self.action in ['list']:
