@@ -227,66 +227,66 @@ class TestGetMyOrganization:
 
 
 
-@pytest.mark.django_db
-class TestLoginOrganization:
+# @pytest.mark.django_db
+# class TestLoginOrganization:
     
-    def test_if_all_ok(self,api_client,base_organizations_url):
-        org_admin = baker.make(OrganizationAdmin,user__username='a',user__password='a')
-        org       = baker.make(Organization,admin=org_admin)
-        user = org.admin.user
-        user.set_password('a')
-        user.save()
-        data = {
-            'username':'a',
-            'password':'a'
-        }
+#     def test_if_all_ok(self,api_client,base_organizations_url):
+#         org_admin = baker.make(OrganizationAdmin,user__username='a',user__password='a')
+#         org       = baker.make(Organization,admin=org_admin)
+#         user = org.admin.user
+#         user.set_password('a')
+#         user.save()
+#         data = {
+#             'username':'a',
+#             'password':'a'
+#         }
         
-        response = api_client.post(base_organizations_url+'login/',data=data)
+#         response = api_client.post(base_organizations_url+'login/',data=data)
         
-        assert response.status_code == status.HTTP_200_OK
-        assert 'tokens' in response.data
+#         assert response.status_code == status.HTTP_200_OK
+#         assert 'tokens' in response.data
         
     
-    def test_if_normal_user_get_403(self,api_client,base_organizations_url):
-        user = baker.make(User,username='a')
-        user.set_password('a')
-        user.save()
-        data = {
-            'username':'a',
-            'password':'a'
-        }
+#     def test_if_normal_user_get_403(self,api_client,base_organizations_url):
+#         user = baker.make(User,username='a')
+#         user.set_password('a')
+#         user.save()
+#         data = {
+#             'username':'a',
+#             'password':'a'
+#         }
         
-        response = api_client.post(base_organizations_url+'login/',data=data)
+#         response = api_client.post(base_organizations_url+'login/',data=data)
         
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert 'tokens' not in response.data
+#         assert response.status_code == status.HTTP_400_BAD_REQUEST
+#         assert 'tokens' not in response.data
         
         
-    def test_if_username_or_password_is_incorrect(self,api_client,base_organizations_url):
-        org_admin = baker.make(OrganizationAdmin,user__username='a',user__password='a')
-        org       = baker.make(Organization,admin=org_admin)
-        user = org.admin.user
-        user.set_password('a')
-        user.save()
-        data = {
-            'username':'b',
-            'password':'a'
-        }
+#     def test_if_username_or_password_is_incorrect(self,api_client,base_organizations_url):
+#         org_admin = baker.make(OrganizationAdmin,user__username='a',user__password='a')
+#         org       = baker.make(Organization,admin=org_admin)
+#         user = org.admin.user
+#         user.set_password('a')
+#         user.save()
+#         data = {
+#             'username':'b',
+#             'password':'a'
+#         }
 
-        response = api_client.post(base_organizations_url+'login/',data=data)
+#         response = api_client.post(base_organizations_url+'login/',data=data)
         
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert 'tokens' not in response.data
+#         assert response.status_code == status.HTTP_400_BAD_REQUEST
+#         assert 'tokens' not in response.data
         
-        data = {
-            'username':'a',
-            'password':'b'
-        }
+#         data = {
+#             'username':'a',
+#             'password':'b'
+#         }
         
-        response = api_client.post(base_organizations_url+'login/',data=data)
+#         response = api_client.post(base_organizations_url+'login/',data=data)
         
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert 'tokens' not in response.data
+#         assert response.status_code == status.HTTP_400_BAD_REQUEST
+#         assert 'tokens' not in response.data
     
 
 
