@@ -61,3 +61,21 @@ class Buffet(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
+
+
+
+class DailyMenu(models.Model):
+    buffet = models.ForeignKey(Buffet,related_name='dailyMenu',on_delete=models.CASCADE)
+    date = models.DateField()
+
+
+class Meal(models.Model):
+    dailyMenu = models.ForeignKey(DailyMenu,related_name='meal',on_delete=models.CASCADE)
+    name = models.CharField()
+    time = models.TimeField()
+
+class Food(models.Model):
+    meal = models.ForeignKey(Meal,related_name='food',on_delete=models.CASCADE)
+    name = models.CharField()
+    price = models.FloatField()
+    count = models.IntegerField()

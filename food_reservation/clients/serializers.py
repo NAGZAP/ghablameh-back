@@ -11,7 +11,7 @@ from django.contrib.auth.hashers import check_password
 from food_reservation.serializers import UserSerializer
 from food_reservation.organizations.serializers import OrganizationSerializer
 from food_reservation.tokens import get_tokens
-
+from food_reservation.models import Organization
 User = get_user_model()
 
 
@@ -143,3 +143,8 @@ class ClientSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('شماره تلفن تکراری است')
         return value
 
+
+class ClientOrgSerializer(serializers.ModelSerializer):
+    class Meta:
+        model  = Organization
+        fields = ['id','name']

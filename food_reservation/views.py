@@ -84,14 +84,24 @@ class ClientViewSet(GenericViewSet):
             return ClientChangePasswordSerializer
     
     def get_permissions(self):
-        if self.action in ['me', 'password']:
+        if self.action in ['me', 'password','getOrg']:
             return [IsClient(),IsNotOrganizationAdmin()]
         else:
             return []
     
         
         
+
+
+    #list of org
+    def get_queryset(self):
+        
+        return Organization.objects.filter(
+            organization__in=self.request.user.client.organizations.all())\
+            .all()
     
+
+
 
     @action(['POST'] , False)
     def register(self, request):
@@ -128,6 +138,15 @@ class ClientViewSet(GenericViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response( {'message' : 'رمز با موفقیت تغییر یافت'} ,status= status.HTTP_200_OK)
+    
+
+    @action(['GET'],False)
+    def getOrg(self,request):
+        instance = request.user.client
+        serializer = ClientOrgSerializer(instance)
+        serializer.is_valid(raise_exception=True)
+        
+        return Response(serializer.data)
 
 
 
