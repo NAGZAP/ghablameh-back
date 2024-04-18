@@ -143,3 +143,21 @@ class ClientSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('شماره تلفن تکراری است')
         return value
 
+
+class ClientListSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(source='user.first_name')
+    last_name = serializers.CharField(source='user.last_name')
+    username = serializers.CharField(source='user.username')
+    email = serializers.EmailField(source='user.email')
+    phone_number = serializers.CharField(source='user.phone_number')
+    date_joined = serializers.DateTimeField(source='user.date_joined',read_only=True)
+    organizations = OrganizationSerializer(many=True,read_only=True)
+    image_url = serializers.SerializerMethodField('get_image_url')
+    
+    def get_image_url(self, obj):
+        if obj.image:
+            return obj.image.url
+        return None
+    class Meta:
+        model = Client
+        fields = ['id','image_url','first_name','last_name','username','email','phone_number','date_joined','organizations','created_at','updated_at']
