@@ -176,9 +176,9 @@ class BuffetViewSet(ModelViewSet):
     def get_permissions(self):
 
         if self.action in ['list', 'retrieve']:
-            return [IsClient()]
+            return [IsClientOrOrganizationAdmin()]
         else:
-            return [IsClient(),IsOrganizationAdmin()]
+            return [IsOrganizationAdmin()]
         
     def get_serializer_class(self):
         if self.action in ['list']:
@@ -199,6 +199,7 @@ class BuffetViewSet(ModelViewSet):
     def perform_create(self, serializer):
         org = self.request.user.organization_admin.organization
         serializer.save(organization=org)
-        
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
+
+    def perform_update(self, serializer):
+        org = self.request.user.organization_admin.organization
+        serializer.save(organization=org)

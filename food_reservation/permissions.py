@@ -28,3 +28,12 @@ class IsClient(BasePermission):
 
     def has_permission(self, request, view):
         return request.user.is_authenticated and hasattr(request.user, 'client')
+    
+
+class IsClientOrOrganizationAdmin(BasePermission):
+    """
+    Custom permission to only allow organization admins or clients to access.
+    """
+
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and (hasattr(request.user, 'organization_admin') or hasattr(request.user, 'client'))

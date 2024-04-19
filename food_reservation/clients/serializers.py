@@ -102,7 +102,16 @@ class ClientSerializer(serializers.ModelSerializer):
         model = Client
         fields = ['id','image_base64','image_url','gender','birthdate','first_name','last_name','username','email','phone_number','date_joined','organizations','created_at','updated_at']
         
-        
+    
+    def validate_image_base64(self,value):
+        if value is not None:
+            try:
+                format, imgstr = value.split(';base64,') 
+                ext = format.split('/')[-1] 
+                base64.b64decode(imgstr)
+            except:
+                raise serializers.ValidationError('عکس نامعتبر است')
+        return value
         
     
     def update(self, instance, validated_data):
