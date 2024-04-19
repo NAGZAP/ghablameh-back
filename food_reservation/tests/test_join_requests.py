@@ -27,7 +27,7 @@ class TestGetClientJoinRequests:
 
     def test_if_anonymous_get_401(self,base_url,api_client):
 
-        respone = api_client.get(base_url+"client/join-requests/")
+        respone = api_client.get(base_url+"clients/join-requests/")
 
         assert respone.status_code == status.HTTP_401_UNAUTHORIZED
 
@@ -35,7 +35,7 @@ class TestGetClientJoinRequests:
 
         api_client.force_authenticate(client.user)
 
-        respone = api_client.get(base_url+"client/join-requests/")
+        respone = api_client.get(base_url+"clients/join-requests/")
 
         assert respone.status_code == status.HTTP_200_OK
 
@@ -43,7 +43,7 @@ class TestGetClientJoinRequests:
             
             api_client.force_authenticate(client.user)
     
-            respone = api_client.get(base_url+"client/join-requests/")
+            respone = api_client.get(base_url+"clients/join-requests/")
     
             assert respone.data == []
 
@@ -52,7 +52,7 @@ class TestGetClientJoinRequests:
         api_client.force_authenticate(client.user)
         baker.make(OrganizationMemberShipRequest,client=client)
 
-        respone = api_client.get(base_url+"client/join-requests/")
+        respone = api_client.get(base_url+"clients/join-requests/")
 
         assert len(respone.data) == 1
 
@@ -62,7 +62,7 @@ class TestRetriveClientJoinRequest:
 
     def test_if_anonymous_get_401(self,base_url,api_client):
 
-        respone = api_client.get(base_url+"client/join-requests/1/")
+        respone = api_client.get(base_url+"clients/join-requests/1/")
 
         assert respone.status_code == status.HTTP_401_UNAUTHORIZED
 
@@ -70,7 +70,7 @@ class TestRetriveClientJoinRequest:
 
         api_client.force_authenticate(client.user)
 
-        respone = api_client.get(base_url+"client/join-requests/1/")
+        respone = api_client.get(base_url+"clients/join-requests/1/")
 
         assert respone.status_code == status.HTTP_404_NOT_FOUND
 
@@ -79,7 +79,7 @@ class TestRetriveClientJoinRequest:
         api_client.force_authenticate(client.user)
         request = baker.make(OrganizationMemberShipRequest,client=client)
 
-        respone = api_client.get(base_url+f"client/join-requests/{request.id}/")
+        respone = api_client.get(base_url+f"clients/join-requests/{request.id}/")
 
         assert respone.status_code == status.HTTP_200_OK
 
@@ -88,7 +88,7 @@ class TestRetriveClientJoinRequest:
         api_client.force_authenticate(client.user)
         request = baker.make(OrganizationMemberShipRequest,client=client)
 
-        respone = api_client.get(base_url+f"client/join-requests/{request.id}/")
+        respone = api_client.get(base_url+f"clients/join-requests/{request.id}/")
 
         assert respone.data['id'] == request.id
 
@@ -98,7 +98,7 @@ class TestCreateClientJoinRequest:
 
     def test_if_anonymous_get_401(self,base_url,api_client):
 
-        respone = api_client.post(base_url+"client/join-requests/")
+        respone = api_client.post(base_url+"clients/join-requests/")
 
         assert respone.status_code == status.HTTP_401_UNAUTHORIZED
 
@@ -110,7 +110,7 @@ class TestCreateClientJoinRequest:
             'organization':organization.id
         }
 
-        respone = api_client.post(base_url+"client/join-requests/",data)
+        respone = api_client.post(base_url+"clients/join-requests/",data)
 
         assert respone.status_code == status.HTTP_201_CREATED
 
@@ -123,7 +123,7 @@ class TestCreateClientJoinRequest:
             'organization':organization.id
         }
 
-        respone = api_client.post(base_url+"client/join-requests/",data)
+        respone = api_client.post(base_url+"clients/join-requests/",data)
 
         assert respone.data['organization_name'] == organization.name
 
@@ -135,9 +135,9 @@ class TestCreateClientJoinRequest:
             'organization':organization.id
         }
 
-        api_client.post(base_url+"client/join-requests/",data)
+        api_client.post(base_url+"clients/join-requests/",data)
 
-        respone = api_client.post(base_url+"client/join-requests/",data)
+        respone = api_client.post(base_url+"clients/join-requests/",data)
 
         assert respone.status_code == status.HTTP_201_CREATED
         assert OrganizationMemberShipRequest.objects.count() == 1
