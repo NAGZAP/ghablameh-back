@@ -55,6 +55,16 @@ class OrganizationSerializer(serializers.ModelSerializer):
             return obj.image.url
         return None
     
+    def validate_image_base64(self,value):
+        if value is not None:
+            try:
+                format, imgstr = value.split(';base64,') 
+                ext = format.split('/')[-1] 
+                base64.b64decode(imgstr)
+            except:
+                raise serializers.ValidationError('عکس نامعتبر است')
+        return value
+    
     
     def validate_admin_username(self, value):
         if self.instance.admin.user.username != value and User.objects.filter(username=value).exists():

@@ -1,13 +1,14 @@
 from django.urls import path
-from rest_framework.routers import DefaultRouter
+from rest_framework_nested import routers
 from . import views
 
-router = DefaultRouter()
+router = routers.DefaultRouter()
 router.register('organizations',views.OrganizationViewSet,'organization')
-router.register('client',views.ClientViewSet,'client')
-router.register('buffet',views.BuffetViewSet,'buffet')
+router.register('clients',views.ClientViewSet,'client')
+router.register('buffets',views.BuffetViewSet,'buffet')
+router.register('clients/join-requests',views.ClientMembershipRequestViewSet,'client-join-requests')
+router.register('organizations/join-requests',views.OrgMembershipRequestViewSet,'organization-join-requests')
 
 
-urlpatterns = [
-    
-] + router.urls
+
+urlpatterns = router.urls

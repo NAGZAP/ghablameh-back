@@ -48,8 +48,38 @@ class OrganizationAdmin(models.Model):
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+
+
+
+class OrganizationMemberShipRequest(models.Model):
+    STATUS_CHOICES = (
+        ('P', _('Pending')),
+        ('A', _('Accepted')),
+        ('R', _('Rejected')),
+    )
+    
+    client       = models.ForeignKey(Client,on_delete=models.CASCADE,related_name='membership_requests') 
+    organization = models.ForeignKey(Organization,on_delete=models.CASCADE,related_name='membership_requests')
+    status       = models.CharField(max_length=1, choices=STATUS_CHOICES, default='P')
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     
 
+class OrganizationMemberShipInvitation(models.Model):
+    STATUS_CHOICES = (
+        ('P', _('Pending')),
+        ('A', _('Accepted')),
+        ('R', _('Rejected')),
+    )
+    
+    client       = models.ForeignKey(Client,on_delete=models.CASCADE,related_name='membership_invitations') 
+    organization = models.ForeignKey(Organization,on_delete=models.CASCADE,related_name='membership_invitations')
+    status       = models.CharField(max_length=1, choices=STATUS_CHOICES, default='P')
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
 
 class Buffet(models.Model):

@@ -12,7 +12,6 @@ from .serializers import *
 from ErrorCode import *
 
 
-
 class OrganizationViewSet(
     mixins.ListModelMixin,
     GenericViewSet,
@@ -30,9 +29,11 @@ class OrganizationViewSet(
             return OrganizationSerializer
         if action == 'password':
             return OrganizationChangePasswordSerializer
+        if action == 'members':
+            ClientListSerializer
     
     def get_permissions(self):
-        if self.action in ['me', 'password']:
+        if self.action in ['me', 'password','members']:
             return [IsOrganizationAdmin()]
         else:
             return []
@@ -70,7 +71,13 @@ class OrganizationViewSet(
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response( {'message' : 'رمز با موفقیت تغییر یافت'} ,status= status.HTTP_200_OK)
-
+    
+    
+    @action(['GET'] , False)
+    def members(self,request):
+        org = request.user.organization_admin.organization
+        serializer = ClientListSerializer(org.members.all(),many=True)
+        return Response(serializer.data)
 
 
 class ClientViewSet(GenericViewSet):
@@ -82,20 +89,12 @@ class ClientViewSet(GenericViewSet):
             return ClientSerializer           
         if action == 'password':
             return ClientChangePasswordSerializer
-    
+
     def get_permissions(self):
         if self.action in ['me', 'password','my_organizations']:
             return [IsClient(),IsNotOrganizationAdmin()]
         else:
             return []
-    
-        
-        
-
-
-    
-    
-
 
 
     @action(['POST'] , False)
@@ -104,14 +103,11 @@ class ClientViewSet(GenericViewSet):
         serializer = ClientRegisterSerializer(data = request.data)
         serializer.is_valid(raise_exception=True)
         client = serializer.save()
-        
+
         return Response({
             **ClientSerializer(client).data,
             'tokens' : get_tokens(client.user),
         },status=status.HTTP_201_CREATED)
-    
-
-
 
     @action(['GET','PUT'] , False)
     def me(self,request):
@@ -123,8 +119,6 @@ class ClientViewSet(GenericViewSet):
 
         serializer = ClientSerializer(instance)
         return Response(serializer.data)
-
-
 
     @action(['POST'] , False)
     def password(self,request):
@@ -143,6 +137,44 @@ class ClientViewSet(GenericViewSet):
         
         return Response(serializer.data)
 
+class ClientMembershipRequestViewSet(
+    GenericViewSet,
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+):
+    serializer_class = CreateMemberShipRequestSerializer
+    permission_classes = [IsClient]
+
+    def get_queryset(self):
+        return OrganizationMemberShipRequest.objects.filter(
+            client_id=self.request.user.client.id
+        )
+
+    def perform_create(self, serializer):
+        serializer.save(client=self.request.user.client, status="P")
+
+
+class OrgMembershipRequestViewSet(
+    GenericViewSet,
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+):
+    serializer_class = MemberShipRequestSerializer
+    permission_classes = [IsOrganizationAdmin]
+
+    def get_queryset(self):
+        return OrganizationMemberShipRequest.objects.filter(
+            organization=self.request.user.organization_admin.organization
+        )
+
+
+    def perform_update(self, serializer):
+        serializer.save(
+            organization=self.request.user.organization_admin.organization
+        )
 
 
 class BuffetViewSet(ModelViewSet):
@@ -152,9 +184,9 @@ class BuffetViewSet(ModelViewSet):
     def get_permissions(self):
 
         if self.action in ['list', 'retrieve']:
-            return [IsClient()]
+            return [IsClientOrOrganizationAdmin()]
         else:
-            return [IsClient(),IsOrganizationAdmin()]
+            return [IsOrganizationAdmin()]
         
     def get_serializer_class(self):
         if self.action in ['list']:
@@ -175,15 +207,7 @@ class BuffetViewSet(ModelViewSet):
     def perform_create(self, serializer):
         org = self.request.user.organization_admin.organization
         serializer.save(organization=org)
-        
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
 
-    
-        
-        
-    
-
-
-
-    
+    def perform_update(self, serializer):
+        org = self.request.user.organization_admin.organization
+        serializer.save(organization=org)
