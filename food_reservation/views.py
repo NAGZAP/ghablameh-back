@@ -84,7 +84,7 @@ class ClientViewSet(GenericViewSet):
             return ClientChangePasswordSerializer
     
     def get_permissions(self):
-        if self.action in ['me', 'password','getOrg']:
+        if self.action in ['me', 'password','my_organizations']:
             return [IsClient(),IsNotOrganizationAdmin()]
         else:
             return []
@@ -93,12 +93,7 @@ class ClientViewSet(GenericViewSet):
         
 
 
-    #list of org
-    def get_queryset(self):
-        
-        return Organization.objects.filter(
-            organization__in=self.request.user.client.organizations.all())\
-            .all()
+    
     
 
 
@@ -141,9 +136,9 @@ class ClientViewSet(GenericViewSet):
     
 
     @action(['GET'],False)
-    def getOrg(self,request):
-        instance = request.user.client
-        serializer = ClientOrgSerializer(instance)
+    def my_organizations(self,request):
+        instance = request.user.client.organizations.all()
+        serializer = ClientOrgSerializer(instance,many=True)
         serializer.is_valid(raise_exception=True)
         
         return Response(serializer.data)

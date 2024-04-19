@@ -75,7 +75,24 @@ class Meal(models.Model):
     time = models.TimeField()
 
 class Food(models.Model):
-    meal = models.ForeignKey(Meal,related_name='food',on_delete=models.CASCADE)
     name = models.CharField()
-    price = models.FloatField()
-    count = models.IntegerField()
+
+
+class MealFood(models.Model):
+    meal = models.ForeignKey(Meal,related_name='meal',on_delete=models.CASCADE)
+    food = models.ForeignKey(Food,related_name='food',on_delete=models.CASCADE)
+    price = models.DecimalField()
+    number_in_stock = models.IntegerField()
+
+
+
+
+class Reserve (models.Model):
+    client = models.ForeignKey(Client,related_name='client',on_delete=models.CASCADE)
+     
+    meal = models.ForeignKey(Meal,related_name='meal',on_delete=models.CASCADE)
+    food = models.ForeignKey(Food,related_name='food',on_delete=models.CASCADE)
+    price = models.DecimalField()
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
