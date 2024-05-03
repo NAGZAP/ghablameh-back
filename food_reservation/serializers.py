@@ -109,3 +109,30 @@ class RateSerializer(serializers.ModelSerializer):
             rate.save()
             return rate
         return super().create(validated_data)
+
+
+
+
+class MealSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model  = Meal
+        fields = ['id','name','time']
+    
+
+class FoodSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model  = Food
+        fields = ['id','name','description']
+
+
+class ReserveSerializer(serializers.ModelSerializer):
+    meal = MealSerializer(source='meal_food.meal', read_only=True)
+    buffet    = BuffetSerializer(source='meal_food.meal.dailyMenu.buffet', read_only=True)
+    food = FoodSerializer(source='meal_food.food', read_only=True)
+
+    class Meta:
+        model  = Reserve
+        fields = ['id','client','meal','buffet','food','created_at','updated_at']
+        read_only_fields = ['id','meal','buffet','food','created_at','updated_at']

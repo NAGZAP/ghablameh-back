@@ -1,3 +1,4 @@
+from datetime import datetime
 from rest_framework import mixins
 from rest_framework import status
 from rest_framework.response import Response
@@ -11,6 +12,7 @@ from food_reservation.organizations.serializers import *
 from .serializers import *
 from ErrorCode import *
 from rest_framework.exceptions import NotFound
+
 
 
 class OrganizationViewSet(
@@ -250,3 +252,43 @@ class BuffetsRateViewSet(
 
     def perform_update(self, serializer):
         serializer.save(client=self.request.user.client, buffet_id=self.kwargs['buffet_pk'])
+
+
+
+class ReservationViewSet(GenericViewSet):
+    serializer_class = ReserveSerializer
+    permission_classes = [IsClient]
+
+
+    @action(['GET'],False)
+    def next(self,request):
+        queryset = Reserve.objects.filter(
+            client=request.user.client,
+            date__gte=datetime.now().date()
+        ).order_by('date').first()
+        if not queryset:
+            raise NotFound()
+        serializer = ReserveSerializer(queryset)
+        return Response(serializer.data)
+
+    # def get_queryset(self):
+    #     return Reserve.objects.filter(
+    #         client=self.request.user.client
+    #     ).select_related('client','buffet','client__user')
+    
+    # def perform_create(self, serializer):
+    #     serializer.save(client=self.request.user.client)
+
+    # def perform_update(self, serializer):
+    #     serializer.save(client=self.request.user.client)
+
+    # def get_serializer_context(self):
+    #     context = super().get_serializer_context()
+    #     context['client_id'] = self.request.user.client.id
+    #     return context
+
+    # def get_permissions(self):
+    #     if self.action in ['list','retrieve']:
+    #         return [IsClientOrOrganizationAdmin()]
+    #     else:
+    #         return [IsClient()]
