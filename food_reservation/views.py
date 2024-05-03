@@ -2,14 +2,15 @@ from rest_framework import mixins
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet,ModelViewSet
-from rest_framework.decorators import action 
+from rest_framework.decorators import action, api_view
 from .permissions import *
 from .tokens import get_tokens
-from .models import (Organization,Client,Buffet)
+from .models import (Organization,Client,Buffet,Reserve)
 from food_reservation.clients.serializers import *
 from food_reservation.organizations.serializers import *
 from .serializers import *
 from ErrorCode import *
+from rest_framework.exceptions import NotFound
 
 
 class OrganizationViewSet(
@@ -131,10 +132,8 @@ class ClientViewSet(GenericViewSet):
 
     @action(['GET'],False)
     def my_organizations(self,request):
-        instance = request.user.client.organizations.all()
-        serializer = ClientOrgSerializer(instance,many=True)
-        serializer.is_valid(raise_exception=True)
-        
+        queryset = request.user.client.organizations.all()
+        serializer = OrganizationListSerializer(queryset,many=True)
         return Response(serializer.data)
 
 class ClientMembershipRequestViewSet(
@@ -188,21 +187,16 @@ class BuffetViewSet(ModelViewSet):
         else:
             return [IsOrganizationAdmin()]
         
-    def get_serializer_class(self):
-        if self.action in ['list']:
-            return BuffetListSerializer
-        return BuffetSerializer
-        
 
     def get_queryset(self):
         # Organization Admin
         if hasattr(self.request.user,'organization_admin'):
             org = self.request.user.organization_admin.organization
-            return Buffet.objects.filter(organization=org).all()
+            return Buffet.objects.filter(organization=org).all().select_related('organization')
         # Client
         return Buffet.objects.filter(
             organization__in=self.request.user.client.organizations.all())\
-            .all()
+            .all().select_related('organization')
             
     def perform_create(self, serializer):
         org = self.request.user.organization_admin.organization
@@ -211,3 +205,48 @@ class BuffetViewSet(ModelViewSet):
     def perform_update(self, serializer):
         org = self.request.user.organization_admin.organization
         serializer.save(organization=org)
+
+
+
+class BuffetsRateViewSet(
+    GenericViewSet,
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.CreateModelMixin,
+):
+    """
+    List, Create, Retrieve, Update Rates for Buffets
+
+    If client already rated the buffet, update the rate
+
+    If the client is not a member of the organization that owns the buffet, 404 is raised
+    
+    """
+    serializer_class = RateSerializer
+    permission_classes = [IsClient]
+
+    def get_queryset(self):
+
+        if not Buffet.objects.filter(
+            id=self.kwargs['buffet_pk'],
+            organization__in=self.request.user.client.organizations.all()
+        ).exists():
+            raise NotFound()
+        
+        return Rate.objects.filter(
+            buffet_id=self.kwargs['buffet_pk'], client=self.request.user.client
+        ).select_related('client','buffet','client__user')
+    
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['buffet_id'] = self.kwargs['buffet_pk']
+        context['client_id'] = self.request.user.client.id
+        return context
+    
+    
+
+    def perform_create(self, serializer):
+        serializer.save(client=self.request.user.client, buffet_id=self.kwargs['buffet_pk'])
+
+    def perform_update(self, serializer):
+        serializer.save(client=self.request.user.client, buffet_id=self.kwargs['buffet_pk'])

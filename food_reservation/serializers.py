@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from .models import Buffet,Organization,OrganizationMemberShipRequest,OrganizationMemberShipInvitation
+from .models import *
 
 
 User = get_user_model()
@@ -15,18 +15,32 @@ class UserSerializer(serializers.ModelSerializer):
         
 class BuffetSerializer(serializers.ModelSerializer):
     organization_name = serializers.CharField(source='organization.name', read_only=True)
+    average_rate = serializers.SerializerMethodField()
+    number_of_rates = serializers.SerializerMethodField()
+    image = serializers.SerializerMethodField('get_image_url')
+
+
+    # get the image of organization
+    def get_image_url(self, obj):
+        if obj.organization.image:
+            return obj.organization.image.url
+        return None
+
+
+    def get_number_of_rates(self, obj):
+        return Rate.objects.filter(buffet=obj).count()
+
+
+    def get_average_rate(self, obj):
+        rates = Rate.objects.filter(buffet=obj)
+        if rates.exists():
+            return rates.aggregate(models.Avg('rate'))['rate__avg']
+        return None
 
     class Meta:
         model  = Buffet
-        fields = ['id', 'name', 'created_at', 'updated_at', 'organization_name']
+        fields = ['id', 'name', 'created_at', 'updated_at', 'organization_name', 'average_rate', 'number_of_rates','image']
 
-
-
-class BuffetListSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model  = Buffet
-        fields = ['id','name']
 
 
 
@@ -74,3 +88,24 @@ class MemberShipInvitationSerializer(serializers.ModelSerializer):
     class Meta:
         model  = OrganizationMemberShipInvitation
         fields = ['id','client','client_name', 'organization', 'organization_name', 'status', 'created_at', 'updated_at']
+
+
+
+class RateSerializer(serializers.ModelSerializer):
+    client_name = serializers.CharField(source='client.user.username', read_only=True)
+    buffet_name = serializers.CharField(source='buffet.name', read_only=True)
+
+
+    class Meta:
+        model  = Rate
+        fields = ['id','client','client_name', 'buffet', 'buffet_name', 'rate', 'created_at', 'updated_at']
+        read_only_fields = ['client','buffet','created_at','updated_at']
+
+    # if client already rated the buffet, update the rate
+    def create(self, validated_data):
+        rate = Rate.objects.filter(client=validated_data['client'], buffet=validated_data['buffet_id']).first()
+        if rate:
+            rate.rate = validated_data['rate']
+            rate.save()
+            return rate
+        return super().create(validated_data)
