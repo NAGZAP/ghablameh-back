@@ -259,7 +259,7 @@ class ReservationViewSet(GenericViewSet):
     serializer_class = ReserveSerializer
     permission_classes = [IsClient]
 
-
+    # TODO :check this endpoint
     @action(['GET'],False)
     def next(self,request):
         queryset = Reserve.objects.filter(
