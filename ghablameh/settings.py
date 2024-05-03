@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     
     'rest_framework',
     'drf_yasg',
+    'channels',
     
     'core',
     'food_reservation',
@@ -118,6 +119,8 @@ MEDIA_ROOT = "/var/www/ghablameh/media"
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'core.User'
+
+ASGI_APPLICATION = 'ghablameh.routing.application'
 
 SIMPLE_JWT = {
     "AUTH_HEADER_TYPES" : ('JWT',),
