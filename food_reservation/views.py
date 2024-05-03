@@ -2,10 +2,10 @@ from rest_framework import mixins
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet,ModelViewSet
-from rest_framework.decorators import action 
+from rest_framework.decorators import action, api_view
 from .permissions import *
 from .tokens import get_tokens
-from .models import (Organization,Client,Buffet)
+from .models import (Organization,Client,Buffet,Reserve)
 from food_reservation.clients.serializers import *
 from food_reservation.organizations.serializers import *
 from .serializers import *
