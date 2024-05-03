@@ -89,7 +89,24 @@ class Buffet(models.Model):
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+
+
+class Rate(models.Model):
+    RATE_CHOICES = (
+        (1, _('Very Bad')),
+        (2, _('Bad')),
+        (3, _('Normal')),
+        (4, _('Good')),
+        (5, _('Very Good')),
+    )
     
+    client = models.ForeignKey(Client,on_delete=models.CASCADE,related_name='rates')
+    buffet = models.ForeignKey(Buffet,on_delete=models.CASCADE,related_name='rates')
+    rate   = models.PositiveSmallIntegerField(choices=RATE_CHOICES)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
 
 

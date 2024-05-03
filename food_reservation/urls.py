@@ -9,6 +9,8 @@ router.register('buffets',views.BuffetViewSet,'buffet')
 router.register('clients/join-requests',views.ClientMembershipRequestViewSet,'client-join-requests')
 router.register('organizations/join-requests',views.OrgMembershipRequestViewSet,'organization-join-requests')
 
+buffets_router = routers.NestedDefaultRouter(router,'buffets',lookup='buffet') 
+buffets_router.register('rates',views.BuffetsRateViewSet,'rates')
 
 
-urlpatterns = router.urls
+urlpatterns = router.urls + buffets_router.urls
