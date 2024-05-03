@@ -192,12 +192,11 @@ class BuffetViewSet(ModelViewSet):
         # Organization Admin
         if hasattr(self.request.user,'organization_admin'):
             org = self.request.user.organization_admin.organization
-            qs = Buffet.objects.filter(organization=org).all()
+            return Buffet.objects.filter(organization=org).all().select_related('organization')
         # Client
-        qs = Buffet.objects.filter(
+        return Buffet.objects.filter(
             organization__in=self.request.user.client.organizations.all())\
-            .all()
-        return qs.select_related('organization')
+            .all().select_related('organization')
             
     def perform_create(self, serializer):
         org = self.request.user.organization_admin.organization
