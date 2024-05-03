@@ -1,4 +1,5 @@
 from datetime import datetime
+from django.db.models.functions import Coalesce
 from rest_framework import mixins
 from rest_framework import status
 from rest_framework.response import Response
@@ -186,6 +187,8 @@ class BuffetViewSet(ModelViewSet):
 
         if self.action in ['list', 'retrieve']:
             return [IsClientOrOrganizationAdmin()]
+        elif self.action in ['top5']:
+            return [IsClient()] 
         else:
             return [IsOrganizationAdmin()]
         
@@ -208,6 +211,18 @@ class BuffetViewSet(ModelViewSet):
         org = self.request.user.organization_admin.organization
         serializer.save(organization=org)
 
+
+    @action(['GET'],False)
+    def top5(self,request):
+        queryset = Buffet.objects.filter(
+            organization__in=request.user.client.organizations.all()
+        ).select_related('organization')\
+            .prefetch_related('rates')\
+            .annotate(
+            average_rate=Coalesce(models.Avg('rates__rate'), 0.0)
+        ).order_by('-average_rate')[:5]
+        serializer = BuffetSerializer(queryset,many=True)
+        return Response(serializer.data)
 
 
 class BuffetsRateViewSet(
