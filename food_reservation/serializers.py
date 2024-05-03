@@ -65,8 +65,8 @@ class CreateMemberShipRequestSerializer(serializers.ModelSerializer):
 
     class Meta:
         model  = OrganizationMemberShipRequest
-        fields = ['id', 'organization', 'created_at', 'updated_at', 'client_name', 'organization_name']
-
+        fields = ['id', 'organization', 'created_at', 'updated_at', 'client_name', 'organization_name','status']
+        read_only_fields = ['client','created_at','updated_at','status']
     def save(self, **kwargs):
         return super().save(**kwargs)
     
