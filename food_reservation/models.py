@@ -85,8 +85,43 @@ class OrganizationMemberShipInvitation(models.Model):
 class Buffet(models.Model):
     name         = models.CharField(max_length=127)
     organization = models.ForeignKey(Organization,related_name='buffets',on_delete=models.CASCADE)
-    # TODO: implement here later 
+    # daily_menus FK with DailyMenu
     
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     
+
+
+
+class DailyMenu(models.Model):
+    buffet = models.ForeignKey(Buffet,related_name='daily_menus',on_delete=models.CASCADE)
+    date = models.DateField()
+
+
+class Meal(models.Model):
+    dailyMenu = models.ForeignKey(DailyMenu,related_name='meals',on_delete=models.CASCADE)
+    name = models.CharField()
+    time = models.TimeField()
+
+class Food(models.Model):
+    name = models.CharField()
+    description = models.TextField()
+
+
+class MealFood(models.Model):
+    meal = models.ForeignKey(Meal,on_delete=models.CASCADE)
+    food = models.ForeignKey(Food,on_delete=models.CASCADE)
+    price = models.DecimalField(max_digits=10, decimal_places=0)
+    number_in_stock = models.IntegerField()
+
+    # reservations :FK with Reserve
+
+    # TODO add a unique constraint on meal and food
+
+
+
+class Reserve (models.Model):
+    client = models.ForeignKey(Client,on_delete=models.CASCADE,related_name='reservations')
+    meal_food = models.ForeignKey(MealFood,on_delete=models.CASCADE,related_name='reservations')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

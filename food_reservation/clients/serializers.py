@@ -11,7 +11,7 @@ from django.contrib.auth.hashers import check_password
 from food_reservation.serializers import UserSerializer
 from food_reservation.organizations.serializers import OrganizationSerializer
 from food_reservation.tokens import get_tokens
-
+from food_reservation.models import Organization
 User = get_user_model()
 
 
@@ -153,6 +153,12 @@ class ClientSerializer(serializers.ModelSerializer):
         return value
 
 
+
+class ClientOrgSerializer(serializers.ModelSerializer):
+    class Meta:
+        model  = Organization
+        fields = ['id','name']
+
 class ClientListSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(source='user.first_name')
     last_name = serializers.CharField(source='user.last_name')
@@ -170,3 +176,4 @@ class ClientListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client
         fields = ['id','image_url','first_name','last_name','username','email','phone_number','date_joined','organizations','created_at','updated_at']
+
