@@ -1,3 +1,5 @@
+from datetime import datetime
+from django.db.models.functions import Coalesce
 from rest_framework import mixins
 from rest_framework import status
 from rest_framework.response import Response
@@ -11,6 +13,7 @@ from food_reservation.organizations.serializers import *
 from .serializers import *
 from ErrorCode import *
 from rest_framework.exceptions import NotFound
+
 
 
 class OrganizationViewSet(
@@ -184,6 +187,8 @@ class BuffetViewSet(ModelViewSet):
 
         if self.action in ['list', 'retrieve']:
             return [IsClientOrOrganizationAdmin()]
+        elif self.action in ['top5']:
+            return [IsClient()] 
         else:
             return [IsOrganizationAdmin()]
         
@@ -206,6 +211,18 @@ class BuffetViewSet(ModelViewSet):
         org = self.request.user.organization_admin.organization
         serializer.save(organization=org)
 
+
+    @action(['GET'],False)
+    def top5(self,request):
+        queryset = Buffet.objects.filter(
+            organization__in=request.user.client.organizations.all()
+        ).select_related('organization')\
+            .prefetch_related('rates')\
+            .annotate(
+            average_rate=Coalesce(models.Avg('rates__rate'), 0.0)
+        ).order_by('-average_rate')[:5]
+        serializer = BuffetSerializer(queryset,many=True)
+        return Response(serializer.data)
 
 
 class BuffetsRateViewSet(
@@ -250,3 +267,43 @@ class BuffetsRateViewSet(
 
     def perform_update(self, serializer):
         serializer.save(client=self.request.user.client, buffet_id=self.kwargs['buffet_pk'])
+
+
+
+class ReservationViewSet(GenericViewSet):
+    serializer_class = ReserveSerializer
+    permission_classes = [IsClient]
+
+    # TODO :check this endpoint
+    @action(['GET'],False)
+    def next(self,request):
+        queryset = Reserve.objects.filter(
+            client=request.user.client,
+            date__gte=datetime.now().date()
+        ).order_by('date').first()
+        if not queryset:
+            raise NotFound()
+        serializer = ReserveSerializer(queryset)
+        return Response(serializer.data)
+
+    # def get_queryset(self):
+    #     return Reserve.objects.filter(
+    #         client=self.request.user.client
+    #     ).select_related('client','buffet','client__user')
+    
+    # def perform_create(self, serializer):
+    #     serializer.save(client=self.request.user.client)
+
+    # def perform_update(self, serializer):
+    #     serializer.save(client=self.request.user.client)
+
+    # def get_serializer_context(self):
+    #     context = super().get_serializer_context()
+    #     context['client_id'] = self.request.user.client.id
+    #     return context
+
+    # def get_permissions(self):
+    #     if self.action in ['list','retrieve']:
+    #         return [IsClientOrOrganizationAdmin()]
+    #     else:
+    #         return [IsClient()]
