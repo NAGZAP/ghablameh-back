@@ -6,10 +6,97 @@ from rest_framework.decorators import action
 from .permissions import *
 from .tokens import get_tokens
 from .models import (Organization,Client,Buffet)
+from rest_framework.pagination import PageNumberPagination
 from food_reservation.clients.serializers import *
 from food_reservation.organizations.serializers import *
 from .serializers import *
 from ErrorCode import *
+import json
+
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 100
+}
+
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 100
+    page_size_query_param = 'page_size'
+    max_page_size = 1000
+
+class DailyMenuViewSet(mixins.ListModelMixin,GenericViewSet):
+    serializer_class = MenuSrializer
+
+    def get_permissions(self):
+
+        if self.action in ['list', 'retrieve']:
+            return [IsClientOrOrganizationAdmin()]
+        else:
+            return [IsOrganizationAdmin()]
+    
+           
+class MealViewSet(ModelViewSet):
+    serializer_class = MealSrializer
+
+    def get_permissions(self):
+
+        if self.action in ['list', 'retrieve']:
+            return [IsClientOrOrganizationAdmin()]
+        else:
+            return [IsOrganizationAdmin()]
+
+
+class MealFoodViewSet(ModelViewSet):
+    serializer_class = MealFoodSerializer
+
+    def get_permissions(self):
+
+        if self.action in ['list', 'retrieve']:
+            return [IsClientOrOrganizationAdmin()]
+        else:
+            return [IsOrganizationAdmin()]
+
+
+
+
+class FoodViewSet(ModelViewSet):
+    serializer_class = FoodSerializer
+
+    def get_permissions(self):
+
+        if self.action in ['list', 'retrieve']:
+            return [IsClientOrOrganizationAdmin()]
+        else:
+            return [IsOrganizationAdmin()]
+        
+    def get_serializer_class(self):
+        
+        return FoodSerializer
+        
+
+    def get_queryset(self):
+        return Food.objects.all()
+        
+            
+    def perform_create(self, serializer):
+        body = self.request.body.decode('utf-8')
+        body_ready = json.load(body)
+        exist = Food.objects.get(name = body_ready['name'])
+        if exist :
+            return Response({'message':'this food found in database '},status=200)  
+        else :
+            serializer.save(name = body_ready['name'])
+
+    def perform_update(self, serializer):
+        body = self.request.body.decode('utf-8')
+        body_ready = json.load(body)
+        exist = Food.objects.get(name = body_ready['name'])
+        if exist :
+            
+            serializer.save(name = body_ready['name'])  
+        else :
+            return Response({'message':'this food not found in data bese try to create a new one '},status=200)
+            
+
 
 
 class OrganizationViewSet(
@@ -38,7 +125,14 @@ class OrganizationViewSet(
         else:
             return []
 
-            
+    
+
+
+
+
+
+    
+                
     @action(['POST'] , False)
     def register(self,request):
         serializer = OrganizationAdminCreateSerializer(data=request.data)
@@ -211,3 +305,10 @@ class BuffetViewSet(ModelViewSet):
     def perform_update(self, serializer):
         org = self.request.user.organization_admin.organization
         serializer.save(organization=org)
+
+
+class AllOrgListViewSet(mixins.ListModelMixin,
+    GenericViewSet,):
+    serializer_class = OrganizationListSerializer
+    queryset = Organization.objects.all()
+    pagination_class = StandardResultsSetPagination

@@ -97,15 +97,29 @@ class DailyMenu(models.Model):
     buffet = models.ForeignKey(Buffet,related_name='daily_menus',on_delete=models.CASCADE)
     date = models.DateField()
 
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
 
 class Meal(models.Model):
     dailyMenu = models.ForeignKey(DailyMenu,related_name='meals',on_delete=models.CASCADE)
+
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
     name = models.CharField()
     time = models.TimeField()
+
+
+
 
 class Food(models.Model):
     name = models.CharField()
     description = models.TextField()
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
 
 class MealFood(models.Model):
