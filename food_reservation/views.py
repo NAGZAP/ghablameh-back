@@ -1,18 +1,23 @@
 from datetime import datetime
+import logging
 from django.db.models.functions import Coalesce
 from rest_framework import mixins
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet,ModelViewSet
 from rest_framework.decorators import action, api_view
+from core.models import EmailVerification
+from food_reservation.clients.serializers import *
+from food_reservation.organizations.serializers import *
 from .permissions import *
 from .tokens import get_tokens
 from .models import (Organization,Client,Buffet,Reserve)
-from food_reservation.clients.serializers import *
-from food_reservation.organizations.serializers import *
 from .serializers import *
 from ErrorCode import *
 from rest_framework.exceptions import NotFound
+
+logger = logging.getLogger(__name__)
+
 
 
 
@@ -48,10 +53,16 @@ class OrganizationViewSet(
         serializer = OrganizationAdminCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         admin_user = serializer.save()
-        
+        verification = EmailVerification.objects.create(user=admin_user.user)
+        try:
+            verification.send_verification_email()
+        except Exception as e:
+            logger.error(e)
+            return Response({
+                "message":"خطا در ارسال ایمیل تایید",
+            },status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         return Response({
             "admin_user":OrganizationAdminSerializer(admin_user).data,
-            'tokens' : get_tokens(admin_user.user),
         },status=status.HTTP_201_CREATED)
     
         
@@ -108,9 +119,16 @@ class ClientViewSet(GenericViewSet):
         serializer.is_valid(raise_exception=True)
         client = serializer.save()
 
+        verification = EmailVerification.objects.create(user=client.user)
+        try:
+            verification.send_verification_email()
+        except Exception as e:
+            logger.error(e)
+            return Response({
+                "message":"خطا در ارسال ایمیل تایید",
+            },status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         return Response({
             **ClientSerializer(client).data,
-            'tokens' : get_tokens(client.user),
         },status=status.HTTP_201_CREATED)
 
     @action(['GET','PUT'] , False)
