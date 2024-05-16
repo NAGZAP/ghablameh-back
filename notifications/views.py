@@ -1,16 +1,20 @@
-from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework.viewsets import GenericViewSet
+from rest_framework import mixins
 from rest_framework.permissions import IsAuthenticated
 from .models import Notification
 from .serializers import *
 
 
-
-
-class NotificationViewSet(ReadOnlyModelViewSet):
+class NotificationViewSet(
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    mixins.ListModelMixin,
+    GenericViewSet,
+):
 
     serializer_class = NotificationSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         return self.request.user.notifications.all().order_by('-created_at')
-        
