@@ -4,6 +4,7 @@ from . import views
 
 router = DefaultRouter()
 router.register("auth",views.Authentication,basename="authentication")
+router.register("verification",views.VerificationViewSet,basename="verification")
 
 
 

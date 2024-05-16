@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from core.models import User
+from core.models import User,EmailVerification
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.password_validation import validate_password
 
@@ -54,3 +54,37 @@ class SignUpSerializer(serializers.ModelSerializer):
         user.save()
 
         return user
+    
+    
+    
+class EmailVerificationSerializer(serializers.Serializer):
+    code = serializers.CharField(max_length=5)
+    email = serializers.EmailField()
+    
+    def validate(self, attrs):
+        user = User.objects.get(email=attrs['email'])
+        verification = EmailVerification.objects.get(user=user)
+        if not user or not verification:
+            raise serializers.ValidationError({"email":"ایمیل وارد شده معتبر نیست"})
+        if verification.is_expired():
+            raise serializers.ValidationError({"code":"کد اعتبار سنجی منقضی شده است"})
+        if not verification.is_valid(attrs['code']):
+            raise serializers.ValidationError({"code":"کد اعتبار سنجی وارد شده صحیح نیست"})
+        return super().validate(attrs)
+    
+    
+    
+    
+
+class ResendEmailVerificationSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    
+    def validate(self, attrs):
+        user = User.objects.get(email=attrs['email'])
+        if not user:
+            raise serializers.ValidationError({"email":"ایمیل وارد شده معتبر نیست"})
+        if not EmailVerification.objects.filter(user=user).exists():
+            raise serializers.ValidationError({"email":"ایمیل وارد شده معتبر نیست"})
+        if user.is_verified:
+            raise serializers.ValidationError({"email":"ایمیل وارد شده قبلا تایید شده است"})
+        return super().validate(attrs)
