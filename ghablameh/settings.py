@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'core',
     'food_reservation',
     'notifications',
+    'wallets',
 ]
 
 MIDDLEWARE = [
