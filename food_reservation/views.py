@@ -6,6 +6,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet,ModelViewSet
 from rest_framework.decorators import action, api_view
+from django_filters.rest_framework import DjangoFilterBackend
 from core.models import EmailVerification
 from food_reservation.clients.serializers import *
 from food_reservation.organizations.serializers import *
@@ -13,6 +14,8 @@ from .permissions import *
 from .tokens import get_tokens
 from .models import (Organization,Client,Buffet,Reserve)
 from .serializers import *
+from .paginations import *
+from .filters import *
 from ErrorCode import *
 from rest_framework.exceptions import NotFound
 
@@ -151,11 +154,25 @@ class ClientViewSet(GenericViewSet):
         return Response( {'message' : 'رمز با موفقیت تغییر یافت'} ,status= status.HTTP_200_OK)
     
 
-    @action(['GET'],False)
-    def my_organizations(self,request):
-        queryset = request.user.client.organizations.all()
-        serializer = OrganizationListSerializer(queryset,many=True)
-        return Response(serializer.data)
+class ClientOrganizationViewSet(
+    mixins.ListModelMixin,
+    GenericViewSet):
+    permission_classes = [IsClient,IsNotOrganizationAdmin]
+    serializer_class = OrganizationListSerializer
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = OrganizationFilter
+    
+    def get_queryset(self):
+        return self.request.user.client.organizations.all()\
+            .prefetch_related('buffets','buffets__rates')\
+            .annotate(
+                average_rate=Coalesce(models.Avg('buffets__rates__rate'), 0.0)
+            )\
+            .order_by('-average_rate')
+    
+    
+    
 
 class ClientMembershipRequestViewSet(
     GenericViewSet,
