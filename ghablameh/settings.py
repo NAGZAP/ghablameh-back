@@ -23,6 +23,7 @@ ALLOWED_HOSTS = ['*']
 INTERNAL_IPS  = ["127.0.0.1"]
 
 INSTALLED_APPS = [
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -37,6 +38,7 @@ INSTALLED_APPS = [
     'core',
     'food_reservation',
     'notifications',
+    'wallets',
 ]
 
 MIDDLEWARE = [
@@ -122,6 +124,14 @@ AUTH_USER_MODEL = 'core.User'
 
 ASGI_APPLICATION = 'ghablameh.routing.application'
 
+
+EMAIL_BACKEND = env("EMAIL_BACKEND")
+EMAIL_HOST = env("EMAIL_HOST")
+EMAIL_PORT = env("EMAIL_PORT")
+EMAIL_USE_TLS = env("EMAIL_USE_TLS")
+EMAIL_HOST_USER = env("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
+
 SIMPLE_JWT = {
     "AUTH_HEADER_TYPES" : ('JWT',),
     "ACCESS_TOKEN_LIFETIME": timedelta(days=30),
@@ -175,3 +185,33 @@ SWAGGER_SETTINGS = {
         }
     },
 }
+
+JAZZMIN_SETTINGS = {
+    "site_title": "Ghablameh",
+    "site_brand": "Ghablameh Administration",
+    "site_logo": "core/img/logo.png",
+    "custom_css": "core/css/custom.css",
+    "welcome_sign": "Welcome to Ghablameh Admin panel",
+    "copyright": "NAGZAP",
+    "related_modal_active": True,
+    "topmenu_links": [
+
+        {"name": "Home",  "url": "admin:index", "permissions": ["auth.view_user"]},
+
+        {"name": "Github", "url": "https://github.com/NAGZAP/ghablameh-back"},
+
+        {"app": "food_reservation", "name": "Reservation"},
+    ],
+    "icons": {
+        "core": "fas fa-users-cog",
+        "core.user": "fas fa-user",
+        "auth.Group": "fas fa-users",
+        "store": "fas fa-store",
+        "store.Plant": "fas fa-leaf",
+        "store.Order": "fas fa-shopping-cart",
+        "store.Accessory": "fas fa-dolly",
+        "store.Category": "fas fa-stream",
+        "store.Product": "fas fa-seedling",
+    },
+}
+

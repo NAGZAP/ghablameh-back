@@ -19,6 +19,9 @@ class Client(models.Model):
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return self.user.username
 
 
 class Organization(models.Model):
@@ -30,7 +33,8 @@ class Organization(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
-    
+    def __str__(self):
+        return self.name
 
 
 
@@ -48,6 +52,10 @@ class OrganizationAdmin(models.Model):
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self) -> str:
+        return self.user.username
+    
 
 
 
@@ -66,6 +74,10 @@ class OrganizationMemberShipRequest(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
+    def __str__(self) -> str:
+        return self.client.user.username + _(" -> ") + self.organization.name
+
+    
 
 class OrganizationMemberShipInvitation(models.Model):
     STATUS_CHOICES = (
@@ -80,6 +92,9 @@ class OrganizationMemberShipInvitation(models.Model):
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self) -> str:
+        return self.organization.name + _(" invited ") + self.client.user.username
 
 
 class Buffet(models.Model):
@@ -90,7 +105,8 @@ class Buffet(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-
+    def __str__(self) -> str:
+        return self.name+ _(" at ") + self.organization.name
 
 class Rate(models.Model):
     RATE_CHOICES = (
@@ -107,22 +123,34 @@ class Rate(models.Model):
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self) -> str:
+        return self.client.user.username + _(" rated ") + self.buffet.name + _(" as ") + str(self.rate)
 
 
 
 class DailyMenu(models.Model):
     buffet = models.ForeignKey(Buffet,related_name='daily_menus',on_delete=models.CASCADE)
     date = models.DateField()
+    
+    def __str__(self) -> str:
+        return _("Menu at ") + self.buffet.name + _(" on ") + str(self.date)
 
 
 class Meal(models.Model):
     dailyMenu = models.ForeignKey(DailyMenu,related_name='meals',on_delete=models.CASCADE)
     name = models.CharField()
     time = models.TimeField()
+    
+    def __str__(self) -> str:
+        return self.name + _(": ") + self.dailyMenu.buffet.name + _(" at ") + str(self.time) 
 
 class Food(models.Model):
     name = models.CharField()
     description = models.TextField()
+    
+    def __str__(self) -> str:
+        return self.name
 
 
 class MealFood(models.Model):
@@ -134,6 +162,8 @@ class MealFood(models.Model):
     # reservations :FK with Reserve
 
     # TODO add a unique constraint on meal and food
+    def __str__(self) -> str:
+        return self.food.name + str(self.number_in_stock) + _(" in stock at ") + self.meal.name
 
 
 
@@ -142,3 +172,7 @@ class Reserve (models.Model):
     meal_food = models.ForeignKey(MealFood,on_delete=models.CASCADE,related_name='reservations')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    
+    def __str__(self) -> str:
+        return self.client.user.username + _(" reserved ") + self.meal_food.food.name + _(" at ") + self.meal_food.meal.name
