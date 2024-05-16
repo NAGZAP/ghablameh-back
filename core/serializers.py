@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from core.models import User,EmailVerification
+from core.models import ForgetPasswordVerification, User,EmailVerification
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.password_validation import validate_password
 
@@ -88,3 +88,36 @@ class ResendEmailVerificationSerializer(serializers.Serializer):
         if user.is_verified:
             raise serializers.ValidationError({"email":"ایمیل وارد شده قبلا تایید شده است"})
         return super().validate(attrs)
+    
+    
+class ForgetPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    
+    def validate(self, attrs):
+        user = User.objects.get(email=attrs['email'])
+        if not user:
+            raise serializers.ValidationError({"email":"ایمیل وارد شده معتبر نیست"})
+        return super().validate(attrs)
+    
+class ForgetPasswordVerificationSerializer(serializers.Serializer):
+    code = serializers.CharField(max_length=5)
+    email = serializers.EmailField()
+    new_password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
+    new_password2 = serializers.CharField(write_only=True, required=True)
+    
+    def validate(self, attrs):
+        user = User.objects.get(email=attrs['email'])
+        verification = ForgetPasswordVerification.objects.get(user=user)
+        if not user or not verification:
+            raise serializers.ValidationError({"email":"ایمیل وارد شده معتبر نیست"})
+        if verification.is_expired():
+            raise serializers.ValidationError({"code":"کد اعتبار سنجی منقضی شده است"})
+        if not verification.is_valid(attrs['code']):
+            raise serializers.ValidationError({"code":"کد اعتبار سنجی وارد شده صحیح نیست"})
+        return super().validate(attrs)
+    
+    def save(self, **kwargs):
+        user = User.objects.get(email=self.validated_data['email'])
+        user.set_password(self.validated_data['new_password'])
+        user.save()
+        return user
