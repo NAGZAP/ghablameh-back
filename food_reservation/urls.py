@@ -11,7 +11,7 @@ router.register('clients/join-requests',views.ClientMembershipRequestViewSet,'cl
 router.register('organizations/join-requests',views.OrgMembershipRequestViewSet,'organization-join-requests')
 router.register('organizations/all-org',views.AllOrgListViewSet,'organization-all')
 router.register('foods',views.FoodViewSet,'list_of_foods')
-
+router.register('reserve',views.ReserveViewSet,'reserving')
 
 
 buffet_router = routers.NestedSimpleRouter(router,r'buffets',lookup='buffet')

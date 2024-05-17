@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework_nested.serializers import NestedHyperlinkedModelSerializer
-from .models import MealFood,Food, Meal,DailyMenu,Buffet,Organization,OrganizationMemberShipRequest,OrganizationMemberShipInvitation
+from .models import Reserve,MealFood,Food, Meal,DailyMenu,Buffet,Organization,OrganizationMemberShipRequest,OrganizationMemberShipInvitation
 
 
 User = get_user_model()
@@ -124,7 +124,8 @@ class MemberShipInvitationSerializer(serializers.ModelSerializer):
         fields = ['id','client','client_name', 'organization', 'organization_name', 'status', 'created_at', 'updated_at']
 
 
-
-
-
+class ReserveSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Reserve
+        fields = ['id', 'client', 'meal_food']
 
