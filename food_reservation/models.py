@@ -16,7 +16,7 @@ class Client(models.Model):
     birthdate     = models.DateField(null=True, blank=True)
     organizations = models.ManyToManyField('Organization',related_name="members")
     image         = models.ImageField(upload_to='clients/profile-image',validators=[validators.validate_file_size],null=True, blank=True)
-    
+    wallet = models.DecimalField(max_digits=10, decimal_places=0,default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -136,14 +136,25 @@ class DailyMenu(models.Model):
     def __str__(self) -> str:
         return _("Menu at ") + self.buffet.name + _(" on ") + str(self.date)
 
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
 
 class Meal(models.Model):
     dailyMenu = models.ForeignKey(DailyMenu,related_name='meals',on_delete=models.CASCADE)
+
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
     name = models.CharField()
     time = models.TimeField()
     
     def __str__(self) -> str:
         return self.name + _(": ") + self.dailyMenu.buffet.name + _(" at ") + str(self.time) 
+
+
+
 
 class Food(models.Model):
     name = models.CharField()
@@ -151,6 +162,9 @@ class Food(models.Model):
     
     def __str__(self) -> str:
         return self.name
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
 
 class MealFood(models.Model):
