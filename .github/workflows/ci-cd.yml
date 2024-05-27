@@ -19,7 +19,7 @@ jobs:
           script: | 
             cd /root/projects/nagzap/ghablameh
             git pull origin main
-            docker-compose -f docker/docker-compose.yaml build 
+            docker compose -f docker/docker-compose.yaml build 
 
       - name: Run tests
         uses: appleboy/ssh-action@v0.1.2
@@ -30,7 +30,7 @@ jobs:
           port: 2024
           script: | 
             cd /root/projects/nagzap/ghablameh
-            docker-compose -f docker/docker-compose.yaml run --rm web pytest
+            docker compose -f docker/docker-compose.yaml run --rm web pytest
 
       - name: Deploy on server
         uses: appleboy/ssh-action@v0.1.2
@@ -42,4 +42,4 @@ jobs:
           script: | 
             cd /root/projects/nagzap/ghablameh
             git pull origin main
-            docker-compose -f docker/docker-compose.yaml up -d  
+            docker compose -f docker/docker-compose.yaml up -d  

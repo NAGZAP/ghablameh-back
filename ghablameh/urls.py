@@ -11,7 +11,9 @@ BASE_URL = settings.BASE_URL
 
 urlpatterns = [
     path(f'{BASE_URL}/swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
-    path(f'{BASE_URL}/raamfar', admin.site.urls),
+    path(f'{BASE_URL}/raamfar/', admin.site.urls),
+    path(f'{BASE_URL}/notifications/',include('notifications.urls')),
+    path(f'{BASE_URL}/wallets/',include('wallets.urls')),
     path(f'{BASE_URL}/',include('core.urls')),
     path(f'{BASE_URL}/',include('food_reservation.urls')),
 ]\
