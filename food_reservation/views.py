@@ -5,6 +5,10 @@ from rest_framework import mixins
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet,ModelViewSet
+from .permissions import *
+from .tokens import get_tokens
+from .models import (Organization,Client,Buffet)
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.decorators import action, api_view
 from django_filters.rest_framework import DjangoFilterBackend
 from core.models import EmailVerification
@@ -17,9 +21,221 @@ from .serializers import *
 from .paginations import *
 from .filters import *
 from ErrorCode import *
+import json
 from rest_framework.exceptions import NotFound
 
 logger = logging.getLogger(__name__)
+
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 100
+}
+
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 100
+    page_size_query_param = 'page_size'
+    max_page_size = 1000
+
+class DailyMenuViewSet(mixins.ListModelMixin,GenericViewSet):
+    serializer_class = MenuSrializer
+
+    def get_permissions(self):
+
+        if self.action in ['list', 'retrieve']:
+            return [IsClientOrOrganizationAdmin()]
+        else:
+            return [IsOrganizationAdmin()]
+    
+           
+class MealViewSet(ModelViewSet):
+    serializer_class = MealSrializer
+
+    def get_permissions(self):
+
+        if self.action in ['list', 'retrieve']:
+            return [IsClientOrOrganizationAdmin()]
+        else:
+            return [IsOrganizationAdmin()]
+
+
+class MealFoodViewSet(ModelViewSet):
+    serializer_class = MealFoodSerializer
+
+    def get_permissions(self):
+
+        if self.action in ['list', 'retrieve']:
+            return [IsClientOrOrganizationAdmin()]
+        else:
+            return [IsOrganizationAdmin()]
+
+
+
+
+class FoodViewSet(ModelViewSet):
+    serializer_class = FoodSerializer
+
+    def get_permissions(self):
+
+        if self.action in ['list', 'retrieve']:
+            return [IsClientOrOrganizationAdmin()]
+        else:
+            return [IsOrganizationAdmin()]
+        
+    def get_serializer_class(self):
+        
+        return FoodSerializer
+        
+
+    def get_queryset(self):
+        return Food.objects.all()
+        
+            
+    def perform_create(self, serializer):
+        body = self.request.body.decode('utf-8')
+        body_ready = json.load(body)
+        exist = Food.objects.get(name = body_ready['name'])
+        if exist :
+            return Response({'message':'this food found in database '},status=200)  
+        else :
+            serializer.save(name = body_ready['name'])
+
+    def perform_update(self, serializer):
+        body = self.request.body.decode('utf-8')
+        body_ready = json.load(body)
+        exist = Food.objects.get(name = body_ready['name'])
+        if exist :
+            
+            serializer.save(name = body_ready['name'])  
+        else :
+            return Response({'message':'this food not found in data bese try to create a new one '},status=200)
+            
+
+
+class ReserveViewSet(ModelViewSet):
+    queryset = Reserve.objects.all()
+    serializer_class = ReserveSerializer
+
+    def create(self, request, *args, **kwargs):
+        client = request.user.client
+        
+        # Retrieve data from request
+        meal_food_id = request.data.get('meal_food')
+        
+        # Check if the meal_food exists
+        try:
+            meal_food = MealFood.objects.get(pk=meal_food_id)
+        except MealFood.DoesNotExist:
+            return Response({"error": "MealFood does not exist"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Check if the client is a member of the organization and buffet
+        if client not in meal_food.meal.dailyMenu.buffet.organization.members.all():
+            return Response({"error": "Client is not a member of the organization and buffet"}, status=status.HTTP_403_FORBIDDEN)
+        
+        # Check if the client has already reserved food in this buffet, daily menu, and meal
+        existing_reservation = Reserve.objects.filter(client=client, meal_food__meal__dailyMenu__buffet=meal_food.meal.dailyMenu.buffet, meal_food__meal__dailyMenu=meal_food.meal.dailyMenu, meal_food__meal=meal_food.meal).exists()
+        if existing_reservation:
+            return Response({"error": "Client has already reserved food in this buffet, daily menu, and meal"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Check if there is enough stock
+        if meal_food.number_in_stock <= 0:
+            return Response({"error": "Not enough stock available"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Check if client has enough balance
+        if client.wallet < meal_food.price:
+            return Response({"error": "Insufficient balance in client's wallet"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Create the reservation
+        reserve = Reserve.objects.create(client=client, meal_food=meal_food)
+        
+        # Update client's wallet and meal_food's stock
+        client.wallet -= meal_food.price
+        client.save()
+        meal_food.number_in_stock -= 1
+        meal_food.save()
+        
+        serializer = ReserveSerializer(reserve)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def update(self, request, *args, **kwargs):
+        client = request.user.client
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        
+        # Retrieve data from request
+        meal_food_id = request.data.get('meal_food')
+        
+        # Check if the meal_food exists
+        try:
+            meal_food = MealFood.objects.get(pk=meal_food_id)
+        except MealFood.DoesNotExist:
+            return Response({"error": "MealFood does not exist"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Check if the client is a member of the organization and buffet
+        if client not in meal_food.meal.dailyMenu.buffet.organization.members.all():
+            return Response({"error": "Client is not a member of the organization and buffet"}, status=status.HTTP_403_FORBIDDEN)
+        
+        # Check if the client has already reserved food in this buffet, daily menu, and meal
+        existing_reservation = Reserve.objects.exclude(pk=instance.pk).filter(client=client, meal_food__meal__dailyMenu__buffet=meal_food.meal.dailyMenu.buffet, meal_food__meal__dailyMenu=meal_food.meal.dailyMenu, meal_food__meal=meal_food.meal).exists()
+        if existing_reservation:
+            return Response({"error": "Client has already reserved food in this buffet, daily menu, and meal"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Check if there is enough stock
+        if meal_food.number_in_stock <= 0:
+            return Response({"error": "Not enough stock available"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Check if client has enough balance
+        if client.wallet < meal_food.price:
+            return Response({"error": "Insufficient balance in client's wallet"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Update the reservation
+        instance.meal_food = meal_food
+        instance.save()
+        
+        # Update client's wallet and meal_food's stock
+        client.wallet -= meal_food.price
+        client.save()
+        meal_food.number_in_stock -= 1
+        meal_food.save()
+        
+        serializer = ReserveSerializer(instance)
+        return Response(serializer.data)
+
+    def destroy(self, request, *args, **kwargs):
+        # Retrieve the reservation
+        reservation = self.get_object()
+        
+        # Check if the client owns the reservation
+        if request.user.client != reservation.client:
+            return Response({"error": "You are not authorized to perform this action"}, status=status.HTTP_403_FORBIDDEN)
+        
+        # Update client's wallet and meal_food's stock
+        reservation.client.wallet += reservation.meal_food.price
+        reservation.client.save()
+        reservation.meal_food.number_in_stock += 1
+        reservation.meal_food.save()
+        
+        # Delete the reservation
+        self.perform_destroy(reservation)
+        
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def list(self, request, *args, **kwargs):
+        # Retrieve client's reservations
+        reservations = Reserve.objects.filter(client=request.user.client)
+        serializer = ReserveSerializer(reservations, many=True)
+        return Response(serializer.data)
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        
+        # Check if the client owns the reservation
+        if request.user.client != instance.client:
+            return Response({"error": "You are not authorized to view this reservation"}, status=status.HTTP_403_FORBIDDEN)
+        
+        serializer = ReserveSerializer(instance)
+        return Response(serializer.data)    
+
+
 
 
 
@@ -50,7 +266,14 @@ class OrganizationViewSet(
         else:
             return []
 
-            
+    
+
+
+
+
+
+    
+                
     @action(['POST'] , False)
     def register(self,request):
         serializer = OrganizationAdminCreateSerializer(data=request.data)
@@ -247,6 +470,12 @@ class BuffetViewSet(ModelViewSet):
         serializer.save(organization=org)
 
 
+
+class AllOrgListViewSet(mixins.ListModelMixin,
+    GenericViewSet,):
+    serializer_class = OrganizationListSerializer
+    queryset = Organization.objects.all()
+    pagination_class = StandardResultsSetPagination
     @action(['GET'],False)
     def top5(self,request):
         queryset = Buffet.objects.filter(
