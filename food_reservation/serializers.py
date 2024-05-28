@@ -32,6 +32,18 @@ class BuffetSerializer(serializers.ModelSerializer):
         return Rate.objects.filter(buffet=obj).count()
 
 
+    def get_average_rate(self, obj):
+        rates = Rate.objects.filter(buffet=obj)
+        if rates.exists():
+            return rates.aggregate(models.Avg('rate'))['rate__avg']
+        return None
+
+    class Meta:
+        model  = Buffet
+        fields = ['id', 'name', 'created_at', 'updated_at', 'organization_name', 'average_rate', 'number_of_rates','image']
+
+
+
 class MenuSrializer(NestedHyperlinkedModelSerializer):
     parent_lookup_kwargs = {
         'buffet_pk': 'buffet__pk'
