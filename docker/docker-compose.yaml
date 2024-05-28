@@ -11,6 +11,8 @@ services:
     restart: always
     volumes:
       - ../:/app
+      - /var/www/static:/var/www/static
+      - /var/www/media:/var/www/media
     depends_on:
       - db
 

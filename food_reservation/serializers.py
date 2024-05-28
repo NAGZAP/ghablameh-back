@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
+from rest_framework_nested.serializers import NestedHyperlinkedModelSerializer
 from .models import *
 
 
@@ -30,6 +31,55 @@ class BuffetSerializer(serializers.ModelSerializer):
     def get_number_of_rates(self, obj):
         return Rate.objects.filter(buffet=obj).count()
 
+
+class MenuSrializer(NestedHyperlinkedModelSerializer):
+    parent_lookup_kwargs = {
+        'buffet_pk': 'buffet__pk'
+    }
+
+    date = serializers.DateField(source = 'dailymenu.date')
+    class Meta :
+        model = DailyMenu
+        fields = ['id','date', 'created_at', 'updated_at']
+
+class MealFoodSerializer(serializers.ModelSerializer):
+    
+    food = serializers.PrimaryKeyRelatedField(queryset= Food.objects.all(),many=False)
+
+    price = serializers.DecimalField(source = 'mealfood.price',max_digits=10,decimal_places=0)
+    number_in_stock = serializers.IntegerField(source = 'mealfood.number_in_stock')
+
+    class Meta:
+        model = MealFood
+        fields = ['food','price','number_in_stock','id']
+
+class MealSrializer(NestedHyperlinkedModelSerializer):
+    parent_lookup_kwargs = {
+        'buffet_pk': 'dailyMenu__buffet__pk',
+        'dailyMenu_pk':'dailyMenu__pk' 
+    }
+    meal_food = MealFoodSerializer(many=True)
+    name = serializers.CharField(source = 'meal.name')
+    time = serializers.TimeField(source = 'meal.time')
+    class Meta :
+        model = Meal
+        fields = ['id','dailyMenu','created_at', 'updated_at','time','name','meal_food']
+
+
+
+
+
+class FoodSerializer(serializers.ModelSerializer):
+    # mealfood = serializers.PrimaryKeyRelatedField(queryset = MealFood.objects.all(),many= False)
+
+
+    class Meta:
+        model  = Food
+        fields = ['name', 'description']
+
+
+
+class BuffetListSerializer(serializers.ModelSerializer):
 
     def get_average_rate(self, obj):
         rates = Rate.objects.filter(buffet=obj)
@@ -88,6 +138,7 @@ class MemberShipInvitationSerializer(serializers.ModelSerializer):
     class Meta:
         model  = OrganizationMemberShipInvitation
         fields = ['id','client','client_name', 'organization', 'organization_name', 'status', 'created_at', 'updated_at']
+
 
 
 
