@@ -116,7 +116,6 @@ class ReserveViewSet(ModelViewSet):
     serializer_class = ReserveSerializer
 
     def get_permissions(self):
-
         return [IsClient()]
 
     def create(self, request, *args, **kwargs):
