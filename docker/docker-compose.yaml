@@ -11,10 +11,10 @@ services:
     restart: always
     volumes:
       - ../:/app
-      - /var/www/static:/var/www/static
-      - /var/www/media:/var/www/media
+      - /var/www/ghablameh/media:/var/www/ghablameh/media
+      - /var/www/ghablameh/static:/var/www/ghablameh/static
     depends_on:
-      - db
+    - db
 
   db:
       image: postgres:16
