@@ -33,7 +33,7 @@ class User(AbstractUser):
 class EmailVerification(models.Model):
     user = models.OneToOneField(User,on_delete=models.CASCADE,related_name='email_verification')
     code = models.CharField(max_length=5,null=True,blank=True)
-    expire_at = models.DateTimeField(default=timezone.now() + timedelta(minutes=10))
+    expire_at = models.DateTimeField(null=True,blank=True)
 
     
     def __str__(self):
@@ -65,7 +65,7 @@ class EmailVerification(models.Model):
 class ForgetPasswordVerification(models.Model):
     user = models.OneToOneField(User,on_delete=models.CASCADE,related_name='forget_password_verification')
     code = models.CharField(max_length=5,null=True,blank=True)
-    expire_at = models.DateTimeField(default=timezone.now() + timedelta(minutes=10))
+    expire_at = models.DateTimeField(null=True,blank=True)
 
     
     def __str__(self):
