@@ -10,6 +10,8 @@ from food_reservation.models import Organization,OrganizationAdmin
 from django.contrib.auth.hashers import check_password
 from food_reservation.serializers import UserSerializer
 from food_reservation.tokens import get_tokens
+from food_reservation.models import Rate
+from django.db import models
 
 User = get_user_model()
 
@@ -111,11 +113,34 @@ class OrganizationSerializer(serializers.ModelSerializer):
 
     
 class OrganizationListSerializer(serializers.ModelSerializer):
+    average_rate = serializers.SerializerMethodField() # average of buffet's rates
+    number_of_rates = serializers.SerializerMethodField() # number of rates of buffets
+    image_url = serializers.SerializerMethodField()
+
+    def get_image_url(self, obj):
+        if obj.image:
+            return obj.image.url
+        return None
+
+    def get_average_rate(self, obj):
+        buffets = obj.buffets.all()
+        if buffets.exists():
+            rates = Rate.objects.filter(buffet__in=buffets)
+            if rates.exists():
+                return rates.aggregate(models.Avg('rate'))['rate__avg']
+        return None
+    
+
+    def get_number_of_rates(self, obj):
+        buffets = obj.buffets.all()
+        if buffets.exists():
+            return Rate.objects.filter(buffet__in=buffets).count()
+        return 0
     
     
     class Meta:
         model  = Organization
-        fields = ['id','name']
+        fields = ['id', 'name', 'image_url', 'average_rate', 'number_of_rates', 'created_at', 'updated_at']
 
 
 
