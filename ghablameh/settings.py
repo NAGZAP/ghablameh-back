@@ -12,7 +12,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = env("SECRET_KEY")
 
-DEBUG = False
+DEBUG = True
 
 USE_X_FORWARDED_HOST = True
 
@@ -215,3 +215,8 @@ JAZZMIN_SETTINGS = {
     },
 }
 
+PGW_API_URL = env("PGW_API_URL")
+PGW_URL = env("PGW_URL")
+PWG_ACCEPTOR_CODE = env("PGW_ACCEPTOR_CODE")
+PGW_PASSWORD = env("PGW_PASSWORD")
+PGW_CALL_BACK_URL = env("PGW_CALL_BACK_URL")
