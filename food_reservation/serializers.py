@@ -21,7 +21,6 @@ class BuffetSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField('get_image_url')
 
 
-    # get the image of organization
     def get_image_url(self, obj):
         if obj.organization.image:
             return obj.organization.image.url
@@ -32,12 +31,24 @@ class BuffetSerializer(serializers.ModelSerializer):
         return Rate.objects.filter(buffet=obj).count()
 
 
-class MenuSrializer(NestedHyperlinkedModelSerializer):
+    def get_average_rate(self, obj):
+        rates = Rate.objects.filter(buffet=obj)
+        if rates.exists():
+            return rates.aggregate(models.Avg('rate'))['rate__avg']
+        return None
+    
+
+    class Meta:
+        model  = Buffet
+        fields = ['id', 'name', 'created_at', 'updated_at', 'organization_name', 'average_rate', 'number_of_rates','image']
+
+
+class MenuSerializer(NestedHyperlinkedModelSerializer):
     parent_lookup_kwargs = {
         'buffet_pk': 'buffet__pk'
     }
 
-    date = serializers.DateField(source = 'dailymenu.date')
+    date = serializers.DateField()
     class Meta :
         model = DailyMenu
         fields = ['id','date', 'created_at', 'updated_at']
@@ -53,7 +64,7 @@ class MealFoodSerializer(serializers.ModelSerializer):
         model = MealFood
         fields = ['food','price','number_in_stock','id']
 
-class MealSrializer(NestedHyperlinkedModelSerializer):
+class MealSerializer(NestedHyperlinkedModelSerializer):
     parent_lookup_kwargs = {
         'buffet_pk': 'dailyMenu__buffet__pk',
         'dailyMenu_pk':'dailyMenu__pk' 
@@ -179,11 +190,11 @@ class FoodSerializer(serializers.ModelSerializer):
 
 
 class ReserveSerializer(serializers.ModelSerializer):
-    meal = MealSerializer(source='meal_food.meal', read_only=True)
+    meal_food = serializers.CharField()
     buffet    = BuffetSerializer(source='meal_food.meal.dailyMenu.buffet', read_only=True)
     food = FoodSerializer(source='meal_food.food', read_only=True)
 
     class Meta:
         model  = Reserve
-        fields = ['id','client','meal','buffet','food','created_at','updated_at']
-        read_only_fields = ['id','meal','buffet','food','created_at','updated_at']
+        fields = ['id','client','meal_food','buffet','food','created_at','updated_at']
+        read_only_fields = ['id','meal_food','buffet','food','created_at','updated_at']
