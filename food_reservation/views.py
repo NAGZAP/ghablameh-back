@@ -36,11 +36,15 @@ class StandardResultsSetPagination(PageNumberPagination):
     page_size_query_param = 'page_size'
     max_page_size = 1000
 
-class DailyMenuViewSet(mixins.ListModelMixin,GenericViewSet):
-    serializer_class = MenuSrializer
+class DailyMenuViewSet(ModelViewSet):
+    serializer_class = MenuSerializer
+
+    def get_queryset(self):
+        buffet_pk = self.kwargs.get('buffet_pk')
+        print(buffet_pk)
+        return DailyMenu.objects.filter(buffet=buffet_pk)
 
     def get_permissions(self):
-
         if self.action in ['list', 'retrieve']:
             return [IsClientOrOrganizationAdmin()]
         else:
@@ -48,26 +52,56 @@ class DailyMenuViewSet(mixins.ListModelMixin,GenericViewSet):
     
            
 class MealViewSet(ModelViewSet):
-    serializer_class = MealSrializer
+    serializer_class = MealSerializer
+
+    def get_queryset(self):
+        buffet_pk = self.kwargs.get('buffet_pk')
+        menu_pk = self.kwargs.get('menu_pk')
+
+        try:
+            daily_menu = DailyMenu.objects.get(pk=menu_pk, buffet_id=buffet_pk)
+        except DailyMenu.DoesNotExist:
+            raise NotFound(detail="Daily Menu not found")
+
+        return Meal.objects.filter(dailyMenu=daily_menu)
 
     def get_permissions(self):
-
         if self.action in ['list', 'retrieve']:
             return [IsClientOrOrganizationAdmin()]
         else:
             return [IsOrganizationAdmin()]
-
+        
 
 class MealFoodViewSet(ModelViewSet):
     serializer_class = MealFoodSerializer
 
-    def get_permissions(self):
+    def get_queryset(self):
+        buffet_pk = self.kwargs.get('buffet_pk')
+        menu_pk = self.kwargs.get('menu_pk')
+        meal_pk = self.kwargs.get('meal_pk')
 
+        try:
+            buffet = Buffet.objects.get(pk=buffet_pk)
+        except Buffet.DoesNotExist:
+            raise NotFound(detail="Buffet not found")
+
+        try:
+            daily_menu = DailyMenu.objects.get(pk=menu_pk, buffet=buffet)
+        except DailyMenu.DoesNotExist:
+            raise NotFound(detail="Daily Menu not found")
+
+        try:
+            meal = Meal.objects.get(pk=meal_pk, dailyMenu=daily_menu)
+        except Meal.DoesNotExist:
+            raise NotFound(detail="Meal not found")
+
+        return MealFood.objects.filter(meal=meal)
+
+    def get_permissions(self):
         if self.action in ['list', 'retrieve']:
             return [IsClientOrOrganizationAdmin()]
         else:
             return [IsOrganizationAdmin()]
-
 
 
 
@@ -88,33 +122,21 @@ class FoodViewSet(ModelViewSet):
 
     def get_queryset(self):
         return Food.objects.all()
-        
-            
-    def perform_create(self, serializer):
-        body = self.request.body.decode('utf-8')
-        body_ready = json.load(body)
-        exist = Food.objects.get(name = body_ready['name'])
-        if exist :
-            return Response({'message':'this food found in database '},status=200)  
-        else :
-            serializer.save(name = body_ready['name'])
 
-    def perform_update(self, serializer):
-        body = self.request.body.decode('utf-8')
-        body_ready = json.load(body)
-        exist = Food.objects.get(name = body_ready['name'])
-        if exist :
-            
-            serializer.save(name = body_ready['name'])  
-        else :
-            return Response({'message':'this food not found in data bese try to create a new one '},status=200)
-            
 
 
 class ReserveViewSet(ModelViewSet):
-    queryset = Reserve.objects.all()
-    serializer_class = ReserveSerializer
+    def get_queryset(self):
+        user = self.request.user
+        if not hasattr(user, 'client'):
+            return Reserve.objects.none()  # Return empty queryset if the user is not a client
 
+        client = user.client
+        return Reserve.objects.filter(client=client)
+    
+
+    serializer_class = ReserveSerializer
+    
     def get_permissions(self):
         return [IsClient()]
 
