@@ -57,8 +57,8 @@ class MealFoodSerializer(serializers.ModelSerializer):
     
     food = serializers.PrimaryKeyRelatedField(queryset= Food.objects.all(),many=False)
 
-    price = serializers.DecimalField(source = 'mealfood.price',max_digits=10,decimal_places=0)
-    number_in_stock = serializers.IntegerField(source = 'mealfood.number_in_stock')
+    price = serializers.DecimalField(max_digits=10,decimal_places=0)
+    number_in_stock = serializers.IntegerField()
 
     class Meta:
         model = MealFood
