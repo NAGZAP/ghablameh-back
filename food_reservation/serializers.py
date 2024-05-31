@@ -44,12 +44,12 @@ class BuffetSerializer(serializers.ModelSerializer):
 
 
 
-class MenuSrializer(NestedHyperlinkedModelSerializer):
+class MenuSerializer(NestedHyperlinkedModelSerializer):
     parent_lookup_kwargs = {
         'buffet_pk': 'buffet__pk'
     }
 
-    date = serializers.DateField(source = 'dailymenu.date')
+    date = serializers.DateField()
     class Meta :
         model = DailyMenu
         fields = ['id','date', 'created_at', 'updated_at']
@@ -58,36 +58,26 @@ class MealFoodSerializer(serializers.ModelSerializer):
     
     food = serializers.PrimaryKeyRelatedField(queryset= Food.objects.all(),many=False)
 
-    price = serializers.DecimalField(source = 'mealfood.price',max_digits=10,decimal_places=0)
-    number_in_stock = serializers.IntegerField(source = 'mealfood.number_in_stock')
+    price = serializers.DecimalField(max_digits=10,decimal_places=0)
+    number_in_stock = serializers.IntegerField()
 
     class Meta:
         model = MealFood
         fields = ['food','price','number_in_stock','id']
 
-class MealSrializer(NestedHyperlinkedModelSerializer):
-    parent_lookup_kwargs = {
-        'buffet_pk': 'dailyMenu__buffet__pk',
-        'dailyMenu_pk':'dailyMenu__pk' 
-    }
-    meal_food = MealFoodSerializer(many=True)
-    name = serializers.CharField(source = 'meal.name')
-    time = serializers.TimeField(source = 'meal.time')
-    class Meta :
-        model = Meal
-        fields = ['id','dailyMenu','created_at', 'updated_at','time','name','meal_food']
+# class MealSerializer(NestedHyperlinkedModelSerializer):
+#     parent_lookup_kwargs = {
+#         'buffet_pk': 'dailyMenu__buffet__pk',
+#         'dailyMenu_pk':'dailyMenu__pk' 
+#     }
+#     meal_food = MealFoodSerializer(many=True)
+#     name = serializers.CharField(source = 'meal.name')
+#     time = serializers.TimeField(source = 'meal.time')
+#     class Meta :
+#         model = Meal
+#         fields = ['id','dailyMenu','created_at', 'updated_at','time','name','meal_food']
 
 
-
-
-
-class FoodSerializer(serializers.ModelSerializer):
-    # mealfood = serializers.PrimaryKeyRelatedField(queryset = MealFood.objects.all(),many= False)
-
-
-    class Meta:
-        model  = Food
-        fields = ['name', 'description']
 
 
 
@@ -191,11 +181,11 @@ class FoodSerializer(serializers.ModelSerializer):
 
 
 class ReserveSerializer(serializers.ModelSerializer):
-    meal = MealSerializer(source='meal_food.meal', read_only=True)
+    meal_food = serializers.CharField()
     buffet    = BuffetSerializer(source='meal_food.meal.dailyMenu.buffet', read_only=True)
     food = FoodSerializer(source='meal_food.food', read_only=True)
 
     class Meta:
         model  = Reserve
-        fields = ['id','client','meal','buffet','food','created_at','updated_at']
-        read_only_fields = ['id','meal','buffet','food','created_at','updated_at']
+        fields = ['id','client','meal_food','buffet','food','created_at','updated_at']
+        read_only_fields = ['id','meal_food','buffet','food','created_at','updated_at']

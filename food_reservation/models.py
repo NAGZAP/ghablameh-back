@@ -157,7 +157,7 @@ class Meal(models.Model):
 
 
 class Food(models.Model):
-    name = models.CharField()
+    name = models.CharField(unique=True)
     description = models.TextField()
     
     def __str__(self) -> str:
