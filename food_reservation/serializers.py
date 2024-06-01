@@ -104,11 +104,6 @@ class MemberShipRequestSerializer(serializers.ModelSerializer):
         model  = OrganizationMemberShipRequest
         fields = ['id','client_name', 'organization_name', 'status', 'created_at', 'updated_at']
 
-    def update(self, instance, validated_data):
-        # if the request is accepted, add the client to the organization    
-        if validated_data['status'] == 'A':
-            instance.organization.members.add(instance.client)
-        return super().update(instance, validated_data)
 
 
 class CreateMemberShipRequestSerializer(serializers.ModelSerializer):

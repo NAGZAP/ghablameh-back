@@ -76,8 +76,11 @@ class OrganizationMemberShipRequest(models.Model):
     
     def __str__(self) -> str:
         return self.client.user.username + _(" -> ") + self.organization.name
-
     
+    def save(self, *args, **kwargs):
+        if self.status == 'A' and self.organization.members.filter(id=self.client.id).exists() == False:
+            self.organization.members.add(self.client)
+        super().save(*args, **kwargs)
 
 class OrganizationMemberShipInvitation(models.Model):
     STATUS_CHOICES = (
