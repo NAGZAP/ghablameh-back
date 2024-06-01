@@ -216,6 +216,13 @@ JAZZMIN_SETTINGS = {
     },
 }
 
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    },
+}
+
 PGW_API_URL = env("PGW_API_URL")
 PGW_URL = env("PGW_URL")
 PWG_ACCEPTOR_CODE = env("PGW_ACCEPTOR_CODE")
