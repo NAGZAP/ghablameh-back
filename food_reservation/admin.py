@@ -21,7 +21,7 @@ class OrganizationAdminInline(admin.StackedInline):
 class OrganizationMemberShipRequestInline(admin.StackedInline):
     model = OrganizationMemberShipRequest
     extra = 0
-    autocomplete_fields = ['client', 'organization']
+    # autocomplete_fields = ['client', 'organization']
 
 # class OrganizationMemberShipInvitationInline(admin.StackedInline):
 #     model = OrganizationMemberShipInvitation
@@ -60,9 +60,10 @@ class ReserveInline(admin.StackedInline):
 
 @admin.register(Client)
 class ClientAdmin(admin.ModelAdmin):
+    
     inlines = [OrganizationMemberShipRequestInline, RateInline, ReserveInline]
     search_fields = ['user__username', 'user__email']
-    autocomplete_fields = ['user', 'organizations']
+    autocomplete_fields = ['user']
     list_select_related = ['user']
     list_display = ['user', 'gender', 'birthdate', 'created_at','organizations_count']
     
@@ -73,8 +74,10 @@ class ClientAdmin(admin.ModelAdmin):
     def get_queryset(self, request: HttpRequest) -> QuerySet[Any]:
         return super().get_queryset(request).prefetch_related('organizations').annotate(organizations_count=Count('organizations'))
 
-    
-
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        if db_field.name == "organizations":
+            kwargs['required'] = False
+        return super().formfield_for_manytomany(db_field, request, **kwargs)
 @admin.register(Organization)
 class OrganizationAdmin(admin.ModelAdmin):
     inlines = [OrganizationMemberShipRequestInline, BuffetInline]

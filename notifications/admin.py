@@ -11,7 +11,7 @@ class NotificationAdmin(admin.ModelAdmin):
     search_fields = ['title', 'message']
     ordering = ['-created_at']
     actions = ['mark_as_read', 'mark_as_unread']
-    autocomplete_fields = ['user']
+    # autocomplete_fields = ['user']
 
     list_select_related = ['user']
 
