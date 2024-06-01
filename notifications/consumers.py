@@ -36,7 +36,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             )
             logger.info(f"user {self.scope['user_id']} Disconnected")
 
-    async def receive(self, text_data):
+    async def c(self, text_data):
         text_data_json = json.loads(text_data)
         message = text_data_json['message']
         user_id = self.scope['user_id']
@@ -45,7 +45,6 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             'message': message,
             'user_id': user_id
         }))
-        await self.create_notification(user_id, "Test Notification", message)
         
     async def send_notification(self, event):
         message = event['message']
