@@ -11,10 +11,9 @@ router.register('clients/my-organizations',views.ClientOrganizationViewSet,'clie
 router.register('clients/join-requests',views.ClientMembershipRequestViewSet,'client-join-requests')
 router.register('organizations/join-requests',views.OrgMembershipRequestViewSet,'organization-join-requests')
 router.register('organizations/all-org',views.AllOrgListViewSet,'organization-all')
-router.register('reserve',views.ReserveViewSet,'reserving')
+router.register('reserve',views.ReservationViewSet,'reserving')
 router.register('buffets',views.BuffetViewSet,'buffet')
 router.register('foods',views.FoodViewSet,'food')
-router.register('reservs',views.ReservationViewSet,'reservs')
 
 buffets_router = routers.NestedDefaultRouter(router,'buffets',lookup='buffet') 
 buffets_router.register('rates',views.BuffetsRateViewSet,'rates')

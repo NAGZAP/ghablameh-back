@@ -154,16 +154,6 @@ class FoodSerializer(serializers.ModelSerializer):
             model  = Food
             fields = ['id','name','description']
 
-class ReserveSerializer(serializers.ModelSerializer):
-    meal_food = serializers.CharField()
-    buffet    = BuffetSerializer(source='meal_food.meal.dailyMenu.buffet', read_only=True)
-    food = FoodSerializer(source='meal_food.food', read_only=True)
-
-    class Meta:
-        model  = Reserve
-        fields = ['id','client','meal_food','buffet','food','created_at','updated_at']
-        read_only_fields = ['id','meal_food','buffet','food','created_at','updated_at']
-        
     
 class SimpleMealSerializer(serializers.ModelSerializer):
 
@@ -226,4 +216,39 @@ class DailyMenuSerializer(serializers.ModelSerializer):
     class Meta:
         model  = DailyMenu
         fields = ['id','date','meals']
-        read_only_fields = ['id','date','meals']        
+        read_only_fields = ['id','date','meals']   
+        
+        
+class ReserveSerializer(serializers.ModelSerializer):
+    meal_food = MealFoodSerializer(read_only=True)
+    buffet = BuffetSerializer(read_only=True)
+
+    
+    class Meta:
+        model  = Reserve
+        fields = ['id','meal_food','buffet','created_at','updated_at']
+        read_only_fields = ['id','meal_food','buffet','created_at','updated_at']
+
+
+class ReserveCreateUpdateSerializer(serializers.ModelSerializer):
+    meal_food = serializers.PrimaryKeyRelatedField(queryset= MealFood.objects.all(),many=False)
+    
+    class Meta:
+        model  = Reserve
+        fields = ['id','meal_food']
+
+    def validate(self, attrs):
+        # check that the client have access to this meal food in its buffets?
+        user = self.context.get('user')
+        if not hasattr(user,'client'):
+            raise serializers.ValidationError("You are not a client")
+        joined_buffets = user.client.joined_buffets()
+        buffet = attrs['meal_food'].meal.dailyMenu.buffet
+        if not buffet in joined_buffets:
+            raise serializers.ValidationError("You are not allowed to reserve this meal food")
+        # check that the meal food is in stock
+        meal_food = attrs['meal_food']
+        if not meal_food.number_in_stock > 0:
+            raise serializers.ValidationError("This meal food is out of stock")
+        return attrs
+    
