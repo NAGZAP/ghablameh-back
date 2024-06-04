@@ -6,16 +6,13 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet,ModelViewSet
 from .permissions import *
-from .tokens import get_tokens
 from .models import (Organization,Client,Buffet)
-from rest_framework.pagination import PageNumberPagination
-from rest_framework.decorators import action, api_view
+from rest_framework.decorators import action
 from django_filters.rest_framework import DjangoFilterBackend
 from core.models import EmailVerification
 from food_reservation.clients.serializers import *
 from food_reservation.organizations.serializers import *
 from .permissions import *
-from .tokens import get_tokens
 from .models import (Organization,Client,Buffet,Reserve)
 from .serializers import *
 from .paginations import *
@@ -23,13 +20,56 @@ from .filters import *
 from ErrorCode import *
 import json
 from rest_framework.exceptions import NotFound
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 logger = logging.getLogger(__name__)
 
 
 
-class WeekMenuViewSet(ModelViewSet):
-    pass
+class WeeklyMenuViewSet(
+    mixins.ListModelMixin,
+    GenericViewSet
+):  
+    serializer_class = DailyMenuSerializer
+    
+    @swagger_auto_schema(manual_parameters=[
+        openapi.Parameter('from_date', openapi.IN_QUERY, description="Start date for the weekly menu", type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE),
+        openapi.Parameter('to_date', openapi.IN_QUERY, description="End date for the weekly menu", type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE)
+    ])
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    
+    def get_queryset(self):
+        from_date = self.request.query_params.get('from_date')
+        to_date = self.request.query_params.get('to_date')
+        buffet_pk = self.kwargs.get('buffet_pk')
+        if not from_date or not to_date:
+            return DailyMenu.objects.none()
+        user = self.request.user
+        joined_buffets = []
+        if hasattr(user,'client'):
+            joined_buffets = user.client.joined_buffets()
+        elif hasattr(user,'organization_admin'):
+            joined_buffets = user.organization_admin.organization.buffets.all()
+        return DailyMenu.objects.filter(buffet__in=joined_buffets, buffet=buffet_pk,date__gte=from_date,date__lte=to_date)
+    
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [IsClientOrOrganizationAdmin()]
+        else:
+            return [IsOrganizationAdmin()]
+        
+    def perform_create(self, serializer):
+        buffet_pk = self.kwargs.get('buffet_pk')
+        serializer.save(buffet_id=buffet_pk)
+        
+    def perform_update(self, serializer):
+        buffet_pk = self.kwargs.get('buffet_pk')
+        serializer.save(buffet_id=buffet_pk)
+
+            
 
 class DailyMenuViewSet(ModelViewSet):
     serializer_class = MenuSerializer
@@ -47,7 +87,7 @@ class DailyMenuViewSet(ModelViewSet):
     
            
 class MealViewSet(ModelViewSet):
-    serializer_class = MealSerializer
+    serializer_class = SimpleMealSerializer
 
     def get_queryset(self):
         buffet_pk = self.kwargs.get('buffet_pk')
@@ -56,7 +96,7 @@ class MealViewSet(ModelViewSet):
         try:
             daily_menu = DailyMenu.objects.get(pk=menu_pk, buffet_id=buffet_pk)
         except DailyMenu.DoesNotExist:
-            raise NotFound(detail="Daily Menu not found")
+            return Meal.objects.none()
 
         return Meal.objects.filter(dailyMenu=daily_menu)
 
@@ -68,7 +108,7 @@ class MealViewSet(ModelViewSet):
         
 
 class MealFoodViewSet(ModelViewSet):
-    serializer_class = MealFoodSerializer
+    serializer_class = SimpleMealFoodSerializer
 
     def get_queryset(self):
         buffet_pk = self.kwargs.get('buffet_pk')
@@ -78,7 +118,7 @@ class MealFoodViewSet(ModelViewSet):
         try:
             buffet = Buffet.objects.get(pk=buffet_pk)
         except Buffet.DoesNotExist:
-            raise NotFound(detail="Buffet not found")
+            return MealFood.objects.none()
 
         try:
             daily_menu = DailyMenu.objects.get(pk=menu_pk, buffet=buffet)
@@ -279,6 +319,8 @@ class OrganizationViewSet(
             return OrganizationChangePasswordSerializer
         if action == 'members':
             ClientListSerializer
+            
+        return OrganizationSerializer
     
     def get_permissions(self):
         if self.action in ['me', 'password','members']:
@@ -413,6 +455,7 @@ class ClientOrganizationViewSet(
                 average_rate=Coalesce(models.Avg('buffets__rates__rate'), 0.0)
             )\
             .order_by('-average_rate')
+            
     
     
     
@@ -428,6 +471,8 @@ class ClientMembershipRequestViewSet(
     permission_classes = [IsClient]
 
     def get_queryset(self):
+        if self.request.user.is_anonymous:
+            return OrganizationMemberShipRequest.objects.none()
         return OrganizationMemberShipRequest.objects.filter(
             client_id=self.request.user.client.id
         )
@@ -446,6 +491,8 @@ class OrgMembershipRequestViewSet(
     permission_classes = [IsOrganizationAdmin]
 
     def get_queryset(self):
+        if self.request.user.is_anonymous:
+            return OrganizationMemberShipRequest.objects.none()
         return OrganizationMemberShipRequest.objects.filter(
             organization=self.request.user.organization_admin.organization
         )
@@ -472,6 +519,8 @@ class BuffetViewSet(ModelViewSet):
         
 
     def get_queryset(self):
+        if self.request.user.is_anonymous:
+            return Buffet.objects.none()
         # Organization Admin
         if hasattr(self.request.user,'organization_admin'):
             org = self.request.user.organization_admin.organization
@@ -495,7 +544,7 @@ class AllOrgListViewSet(mixins.ListModelMixin,
     GenericViewSet,):
     serializer_class = OrganizationListSerializer
     queryset = Organization.objects.all()
-    pagination_class = StandardResultsSetPagination
+    pagination_class = CustomPageNumberPagination
     @action(['GET'],False)
     def top5(self,request):
         queryset = Buffet.objects.filter(
@@ -527,12 +576,11 @@ class BuffetsRateViewSet(
     permission_classes = [IsClient]
 
     def get_queryset(self):
-
-        if not Buffet.objects.filter(
-            id=self.kwargs['buffet_pk'],
+        if self.request.user.is_anonymous or not Buffet.objects.filter(
+            id=self.kwargs.get('buffet_pk'),
             organization__in=self.request.user.client.organizations.all()
         ).exists():
-            raise NotFound()
+            return Rate.objects.none()
         
         return Rate.objects.filter(
             buffet_id=self.kwargs['buffet_pk'], client=self.request.user.client
@@ -540,8 +588,9 @@ class BuffetsRateViewSet(
     
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        context['buffet_id'] = self.kwargs['buffet_pk']
-        context['client_id'] = self.request.user.client.id
+        context['buffet_id'] = self.kwargs.get('buffet_pk')
+        if self.request.user.is_authenticated:
+            context['client_id'] = self.request.user.client.id
         return context
     
     
