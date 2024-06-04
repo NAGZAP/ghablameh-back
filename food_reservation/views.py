@@ -474,7 +474,13 @@ class BuffetsRateViewSet(
 
 
 
-class ReservationViewSet(ModelViewSet):
+class ReservationViewSet(
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.DestroyModelMixin,
+    GenericViewSet   
+    ):
     permission_classes = [IsClient]
     
     def get_serializer_class(self):
@@ -516,10 +522,14 @@ class ReservationViewSet(ModelViewSet):
     def get_queryset(self):
         from_date = self.request.query_params.get('from_date')
         to_date = self.request.query_params.get('to_date')
+        if from_date and to_date:
+            return Reserve.objects.filter(
+                client=self.request.user.client,
+                date__gte=from_date,
+                date__lte=to_date
+            ).select_related('client','client__user','meal_food')
         return Reserve.objects.filter(
-            client=self.request.user.client,
-            date__gte=from_date,
-            date__lte=to_date
+            client=self.request.user.client
         ).select_related('client','client__user','meal_food')
     
     def perform_create(self, serializer):
