@@ -84,9 +84,13 @@ class DailyMenuViewSet(
         date = self.kwargs.get('date')
         buffet_pk = self.kwargs.get('buffet_pk')
         user = self.request.user
+        print(1)
         if hasattr(user,'organization_admin'):
-            return DailyMenu.objects.get_or_create(buffet_id=buffet_pk, date=date)[0]
+            print(2)
+            daily_menu =  DailyMenu.objects.get_or_create(buffet_id=buffet_pk, date=date)[0]
+            return DailyMenu.objects.filter(buffet_id=buffet_pk, date=date)
         else:
+            print(3)
             return DailyMenu.objects.filter(buffet_id=buffet_pk, date=date)
 
 
@@ -99,6 +103,7 @@ class MealViewSet(ModelViewSet):
         buffet_pk = self.kwargs.get('buffet_pk')
         menu_date = self.kwargs.get('menu_date')
         if menu_date:
+            daily_menu = DailyMenu.objects.get_or_create(buffet_id=buffet_pk, date=menu_date)[0]
             return Meal.objects.select_related('dailyMenu').filter(dailyMenu__buffet_id=buffet_pk, dailyMenu__date=menu_date)
         return Meal.objects.none()
 
