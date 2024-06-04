@@ -151,7 +151,7 @@ class FoodViewSet(
     GenericViewSet
     ):
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['name']
+    filterset_class = FoodFilter
     permission_classes = [IsOrganizationAdmin]
     queryset = Food.objects.all()
     pagination_class = CustomPageNumberPagination

@@ -1,6 +1,6 @@
 from django_filters import rest_framework as filters, NumberFilter
 from django.db.models import Avg
-from .models import Organization
+from .models import Organization,Food
 
 class OrganizationFilter(filters.FilterSet):
     average_rate_gte = NumberFilter(field_name='average_rate', lookup_expr='gte')
@@ -17,3 +17,11 @@ class OrganizationFilter(filters.FilterSet):
 
     def get_queryset(self):
         return super().get_queryset().annotate(average_rate=Avg('buffets__rates__rate'))
+    
+    
+class FoodFilter(filters.FilterSet):
+    class Meta:
+        model = Food
+        fields = {
+            'name': ['icontains'],
+        }
