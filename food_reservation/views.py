@@ -26,15 +26,10 @@ from rest_framework.exceptions import NotFound
 
 logger = logging.getLogger(__name__)
 
-REST_FRAMEWORK = {
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
-    'PAGE_SIZE': 100
-}
 
-class StandardResultsSetPagination(PageNumberPagination):
-    page_size = 100
-    page_size_query_param = 'page_size'
-    max_page_size = 1000
+
+class WeekMenuViewSet(ModelViewSet):
+    pass
 
 class DailyMenuViewSet(ModelViewSet):
     serializer_class = MenuSerializer
