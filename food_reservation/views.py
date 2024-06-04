@@ -71,92 +71,23 @@ class WeeklyMenuViewSet(
 
             
 
-class DailyMenuViewSet(ModelViewSet):
-    serializer_class = MenuSerializer
+class DailyMenuViewSet(
+    mixins.RetrieveModelMixin,
+    GenericViewSet
+    ):
+    lookup_field = 'date'
+    serializer_class = DailyMenuSerializer
+    permission_classes = [IsClientOrOrganizationAdmin]
 
-    def get_queryset(self):
-        buffet_pk = self.kwargs.get('buffet_pk')
-        print(buffet_pk)
-        return DailyMenu.objects.filter(buffet=buffet_pk)
-
-    def get_permissions(self):
-        if self.action in ['list', 'retrieve']:
-            return [IsClientOrOrganizationAdmin()]
-        else:
-            return [IsOrganizationAdmin()]
     
-           
-class MealViewSet(ModelViewSet):
-    serializer_class = SimpleMealSerializer
-
     def get_queryset(self):
+        date = self.kwargs.get('date')
         buffet_pk = self.kwargs.get('buffet_pk')
-        menu_pk = self.kwargs.get('menu_pk')
-
-        try:
-            daily_menu = DailyMenu.objects.get(pk=menu_pk, buffet_id=buffet_pk)
-        except DailyMenu.DoesNotExist:
-            return Meal.objects.none()
-
-        return Meal.objects.filter(dailyMenu=daily_menu)
-
-    def get_permissions(self):
-        if self.action in ['list', 'retrieve']:
-            return [IsClientOrOrganizationAdmin()]
+        user = self.request.user
+        if hasattr(user,'organization_admin'):
+            return DailyMenu.objects.get_or_create(buffet_id=buffet_pk, date=date)[0]
         else:
-            return [IsOrganizationAdmin()]
-        
-
-class MealFoodViewSet(ModelViewSet):
-    serializer_class = SimpleMealFoodSerializer
-
-    def get_queryset(self):
-        buffet_pk = self.kwargs.get('buffet_pk')
-        menu_pk = self.kwargs.get('menu_pk')
-        meal_pk = self.kwargs.get('meal_pk')
-
-        try:
-            buffet = Buffet.objects.get(pk=buffet_pk)
-        except Buffet.DoesNotExist:
-            return MealFood.objects.none()
-
-        try:
-            daily_menu = DailyMenu.objects.get(pk=menu_pk, buffet=buffet)
-        except DailyMenu.DoesNotExist:
-            raise NotFound(detail="Daily Menu not found")
-
-        try:
-            meal = Meal.objects.get(pk=meal_pk, dailyMenu=daily_menu)
-        except Meal.DoesNotExist:
-            raise NotFound(detail="Meal not found")
-
-        return MealFood.objects.filter(meal=meal)
-
-    def get_permissions(self):
-        if self.action in ['list', 'retrieve']:
-            return [IsClientOrOrganizationAdmin()]
-        else:
-            return [IsOrganizationAdmin()]
-
-
-
-class FoodViewSet(ModelViewSet):
-    serializer_class = FoodSerializer
-
-    def get_permissions(self):
-
-        if self.action in ['list', 'retrieve']:
-            return [IsClientOrOrganizationAdmin()]
-        else:
-            return [IsOrganizationAdmin()]
-        
-    def get_serializer_class(self):
-        
-        return FoodSerializer
-        
-
-    def get_queryset(self):
-        return Food.objects.all()
+            return DailyMenu.objects.filter(buffet_id=buffet_pk, date=date)
 
 
 
