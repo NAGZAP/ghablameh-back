@@ -166,8 +166,8 @@ class MealAdmin(admin.ModelAdmin):
     
     def get_queryset(self, request: HttpRequest) -> QuerySet[Any]:
         return super().get_queryset(request)\
-            .prefetch_related('mealfood_set')\
-            .annotate(foods_count=Count('mealfood'))
+            .prefetch_related('items')\
+            .annotate(foods_count=Count('items'))
 
 @admin.register(Food)
 class FoodAdmin(admin.ModelAdmin):
