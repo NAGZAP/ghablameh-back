@@ -146,11 +146,6 @@ class RateSerializer(serializers.ModelSerializer):
 
 
 
-class SimpleMealSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model  = Meal
-        fields = ['id','name','time']
     
 
 class FoodSerializer(serializers.ModelSerializer):
@@ -170,6 +165,11 @@ class ReserveSerializer(serializers.ModelSerializer):
         read_only_fields = ['id','meal_food','buffet','food','created_at','updated_at']
         
     
+class SimpleMealSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model  = Meal
+        fields = ['id','name','time']
 
 class MealFoodSerializer(serializers.ModelSerializer):
     food = FoodSerializer(read_only=True)

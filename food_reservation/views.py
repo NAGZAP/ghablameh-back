@@ -91,6 +91,41 @@ class DailyMenuViewSet(
 
 
 
+class MealViewSet(ModelViewSet):
+    permission_classes = [IsOrganizationAdmin]
+    serializer_class = SimpleMealSerializer
+    
+    def get_queryset(self):
+        buffet_pk = self.kwargs.get('buffet_pk')
+        menu_date = self.kwargs.get('menu_date')
+        if menu_date:
+            return Meal.objects.select_related('dailyMenu').filter(dailyMenu__buffet_id=buffet_pk, dailyMenu__date=menu_date)
+        return Meal.objects.none()
+
+
+
+
+
+
+
+
+
+class FoodViewSet(
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.CreateModelMixin,
+    GenericViewSet
+    ):
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['name']
+    permission_classes = [IsOrganizationAdmin]
+    queryset = Food.objects.all()
+    pagination_class = CustomPageNumberPagination
+    serializer_class = FoodSerializer
+    
+
+
+
 class ReserveViewSet(ModelViewSet):
     def get_queryset(self):
         user = self.request.user

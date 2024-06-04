@@ -13,6 +13,7 @@ router.register('organizations/join-requests',views.OrgMembershipRequestViewSet,
 router.register('organizations/all-org',views.AllOrgListViewSet,'organization-all')
 router.register('reserve',views.ReserveViewSet,'reserving')
 router.register('buffets',views.BuffetViewSet,'buffet')
+router.register('foods',views.FoodViewSet,'food')
 router.register('reservs',views.ReservationViewSet,'reservs')
 
 buffets_router = routers.NestedDefaultRouter(router,'buffets',lookup='buffet') 
@@ -20,9 +21,12 @@ buffets_router.register('rates',views.BuffetsRateViewSet,'rates')
 buffets_router.register('menus',views.DailyMenuViewSet,basename='menu')
 buffets_router.register('weekly-menus',views.WeeklyMenuViewSet,basename='weekly-menu')
 
+daily_menu_router = routers.NestedDefaultRouter(buffets_router,'menus',lookup='menu')
+daily_menu_router.register('meals',views.MealViewSet,'meals')
 
 
 
-urlpatterns =\
-    router.urls + buffets_router.urls
+
+urlpatterns = router.urls + buffets_router.urls + daily_menu_router.urls
+    
 
