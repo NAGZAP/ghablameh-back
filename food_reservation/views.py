@@ -105,6 +105,35 @@ class MealViewSet(ModelViewSet):
 
 
 
+class MealFoodViewSet(ModelViewSet):
+    permission_classes = [IsOrganizationAdmin]
+        
+    def get_serializer_class(self):
+        if self.action in ['list', 'retrieve']:
+            return MealFoodSerializer
+        return MealFoodCreateUpdateSerializer
+    
+    def get_queryset(self):
+        meal_pk = self.kwargs.get('meal_pk')
+        return MealFood.objects.filter(meal_id=meal_pk)
+    
+    def perform_create(self, serializer):
+        meal_pk = self.kwargs.get('meal_pk')
+        serializer.save(meal_id=meal_pk)
+        
+    def perform_update(self, serializer):
+
+        meal_pk = self.kwargs.get('meal_pk')
+        serializer.save(meal_id=meal_pk)
+        
+    def get_serializer_context(self):
+        # add the user, menu_date, buffet_pk and meal_pk to the context
+        context = super().get_serializer_context()
+        context['meal_id'] = self.kwargs.get('meal_pk')
+        context['buffet_id'] = self.kwargs.get('buffet_pk')
+        context['menu_date'] = self.kwargs.get('menu_date')
+        context['user'] = self.request.user
+        return context
 
 
 

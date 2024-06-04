@@ -179,6 +179,35 @@ class MealFoodSerializer(serializers.ModelSerializer):
         fields = ['id','food','price','number_in_stock']
         read_only_fields = ['id','food']
         
+        
+    def validate(self, attrs):
+        if attrs['number_in_stock'] < 0:
+            raise serializers.ValidationError("number_in_stock must be positive")
+        user = self.context.get('user')
+        if not hasattr(user,'organization_admin'):
+            raise serializers.ValidationError("You are not an admin")
+        buffet_id = self.context.get('buffet_id')
+        buffet = user.organization_admin.organization.buffets.filter(id=buffet_id).first()
+        if not buffet:
+            raise serializers.ValidationError("Buffet not found")
+        menu_date = self.context.get('menu_date')
+        daily_menu = buffet.daily_menus.filter(date=menu_date).first()
+        if not daily_menu:
+            raise serializers.ValidationError("Daily menu not found")
+        meal_id = self.context.get('meal_id')
+        meal = daily_menu.meals.filter(id=meal_id).first()
+        if not meal:
+            raise serializers.ValidationError("Meal not found")
+        return attrs
+    
+class MealFoodCreateUpdateSerializer(MealFoodSerializer):
+    food = serializers.PrimaryKeyRelatedField(queryset= Food.objects.all(),many=False)
+    
+    class Meta:
+        model  = MealFood
+        fields = ['id','food','price','number_in_stock']
+        read_only_fields = ['id']
+        
 
 
 class MealSerializer(serializers.ModelSerializer):

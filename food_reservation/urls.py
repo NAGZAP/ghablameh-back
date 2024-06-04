@@ -24,9 +24,12 @@ buffets_router.register('weekly-menus',views.WeeklyMenuViewSet,basename='weekly-
 daily_menu_router = routers.NestedDefaultRouter(buffets_router,'menus',lookup='menu')
 daily_menu_router.register('meals',views.MealViewSet,'meals')
 
+meal_router = routers.NestedDefaultRouter(daily_menu_router,'meals',lookup='meal')
+meal_router.register('items',views.MealFoodViewSet,'items')
 
 
 
-urlpatterns = router.urls + buffets_router.urls + daily_menu_router.urls
+
+urlpatterns = router.urls + buffets_router.urls + daily_menu_router.urls + meal_router.urls
     
 
