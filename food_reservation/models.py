@@ -161,7 +161,8 @@ class Meal(models.Model):
 
 class Food(models.Model):
     name = models.CharField(unique=True)
-    description = models.TextField()
+    description = models.TextField(blank=True, null=True)
+    
     
     def __str__(self) -> str:
         return self.name
