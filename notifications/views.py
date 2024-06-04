@@ -17,4 +17,7 @@ class NotificationViewSet(
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return self.request.user.notifications.all().order_by('-created_at')
+        if self.request.user.is_authenticated:
+            return self.request.user.notifications.all().order_by('-created_at')
+        return Notification.objects.none()
+    
