@@ -22,7 +22,9 @@ class Client(models.Model):
     
     def __str__(self):
         return self.user.username
-
+    
+    def joined_buffets(self):
+        return Buffet.objects.filter(organization__members=self)
 
 class Organization(models.Model):
     # members ManyToMany
@@ -171,7 +173,7 @@ class Food(models.Model):
 
 
 class MealFood(models.Model):
-    meal = models.ForeignKey(Meal,on_delete=models.CASCADE)
+    meal = models.ForeignKey(Meal,on_delete=models.CASCADE,related_name='items')
     food = models.ForeignKey(Food,on_delete=models.CASCADE)
     price = models.DecimalField(max_digits=10, decimal_places=0)
     number_in_stock = models.IntegerField()
