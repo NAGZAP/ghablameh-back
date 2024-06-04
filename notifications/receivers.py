@@ -22,13 +22,15 @@ def create_notification(sender, instance, created, **kwargs):
             title=_(f"Membership Request Rejected"),
             message=_(f"Your request to join {instance.organization.name} has been rejected.")
         )
-    elif sender.__name__ == 'Payment' and instance.verified:
+    elif sender.__name__ == "Transaction" and created:
+        amount = instance.amount
+        title = _(f"deposit {amount}") if amount > 0 else _(f"withdraw {-amount}")
+        message = instance.description if instance.description else _(f"Transaction of {amount}")
         Notification.objects.create(
-            user=instance.user,
-            title=_(f"Payment Received"),
-            message=_(f"Your payment of {instance.amount} in {instance.created_at} has been received.")
-        )
-
+            user=instance.wallet.user,
+            title=title,
+            message=message
+        )    
 
 @receiver(post_save, sender=Notification)
 def send_notification(sender, instance, created, **kwargs):
