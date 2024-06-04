@@ -100,14 +100,28 @@ class MealViewSet(ModelViewSet):
     serializer_class = SimpleMealSerializer
     
     def get_queryset(self):
+        print(self.kwargs)
         buffet_pk = self.kwargs.get('buffet_pk')
         menu_date = self.kwargs.get('menu_date')
         if menu_date:
+            print(1)
             daily_menu = DailyMenu.objects.get_or_create(buffet_id=buffet_pk, date=menu_date)[0]
+            print(daily_menu)
             return Meal.objects.select_related('dailyMenu').filter(dailyMenu__buffet_id=buffet_pk, dailyMenu__date=menu_date)
         return Meal.objects.none()
-
-
+    
+    def perform_create(self, serializer):
+        buffet_pk = self.kwargs.get('buffet_pk')
+        menu_date = self.kwargs.get('menu_date')
+        daily_menu = DailyMenu.objects.get_or_create(buffet_id=buffet_pk, date=menu_date)[0]
+        serializer.save(dailyMenu=daily_menu)
+    
+    def perform_update(self, serializer):
+        menu_date = self.kwargs.get('menu_date')
+        buffet_pk = self.kwargs.get('buffet_pk')
+        daily_menu = DailyMenu.objects.get_or_create(buffet_id=buffet_pk, date=menu_date)[0]
+        serializer.save(dailyMenu=daily_menu)
+    
 
 
 class MealFoodViewSet(ModelViewSet):
@@ -468,6 +482,20 @@ class ReservationViewSet(ModelViewSet):
         if action in ['list','retrieve','next']:
             return ReserveSerializer
         return ReserveCreateUpdateSerializer
+    
+    
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['user'] = self.request.user
+        return context
+    
+    @swagger_auto_schema(manual_parameters=[
+    openapi.Parameter('from_date', openapi.IN_QUERY, description="Start date for the weekly menu", type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE),
+    openapi.Parameter('to_date', openapi.IN_QUERY, description="End date for the weekly menu", type=openapi.TYPE_STRING, format=openapi.FORMAT_DATE)
+    ])
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+    
 
     # TODO :add wallet decreasing
     @action(['GET'],False)
@@ -486,8 +514,12 @@ class ReservationViewSet(ModelViewSet):
         
 
     def get_queryset(self):
+        from_date = self.request.query_params.get('from_date')
+        to_date = self.request.query_params.get('to_date')
         return Reserve.objects.filter(
-            client=self.request.user.client
+            client=self.request.user.client,
+            date__gte=from_date,
+            date__lte=to_date
         ).select_related('client','client__user','meal_food')
     
     def perform_create(self, serializer):

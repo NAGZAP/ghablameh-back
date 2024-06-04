@@ -250,5 +250,9 @@ class ReserveCreateUpdateSerializer(serializers.ModelSerializer):
         meal_food = attrs['meal_food']
         if not meal_food.number_in_stock > 0:
             raise serializers.ValidationError("This meal food is out of stock")
+        
+        # check that client don't have 2 reserve on same meal 
+        if user.client.reservations.filter(meal_food__meal=meal_food.meal).exists():
+            raise serializers.ValidationError("You already have a reserve on this meal")
         return attrs
     
