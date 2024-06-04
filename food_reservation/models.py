@@ -1,3 +1,4 @@
+from typing import Iterable
 from django.db import models
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
@@ -188,11 +189,19 @@ class MealFood(models.Model):
 
 
 class Reserve (models.Model):
-    client = models.ForeignKey(Client,on_delete=models.CASCADE,related_name='reservations')
-    meal_food = models.ForeignKey(MealFood,on_delete=models.CASCADE,related_name='reservations')
+    client     = models.ForeignKey(Client,on_delete=models.CASCADE,related_name='reservations')
+    meal_food  = models.ForeignKey(MealFood,on_delete=models.CASCADE,related_name='reservations')
+    date       = models.DateField()
+    buffet     = models.ForeignKey(Buffet,on_delete=models.CASCADE,related_name='reservations',null=True,blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     
+    
     def __str__(self) -> str:
         return self.client.user.username + _(" reserved ") + self.meal_food.food.name + _(" at ") + self.meal_food.meal.name
+    
+    def save(self, *args, **kwargs):
+        self.date = self.meal_food.meal.dailyMenu.date
+        self.buffet = self.meal_food.meal.dailyMenu.buffet
+        super().save(*args, **kwargs)

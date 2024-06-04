@@ -146,11 +146,6 @@ class RateSerializer(serializers.ModelSerializer):
 
 
 
-class SimpleMealSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model  = Meal
-        fields = ['id','name','time']
     
 
 class FoodSerializer(serializers.ModelSerializer):
@@ -159,17 +154,12 @@ class FoodSerializer(serializers.ModelSerializer):
             model  = Food
             fields = ['id','name','description']
 
-class ReserveSerializer(serializers.ModelSerializer):
-    meal_food = serializers.CharField()
-    buffet    = BuffetSerializer(source='meal_food.meal.dailyMenu.buffet', read_only=True)
-    food = FoodSerializer(source='meal_food.food', read_only=True)
+    
+class SimpleMealSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model  = Reserve
-        fields = ['id','client','meal_food','buffet','food','created_at','updated_at']
-        read_only_fields = ['id','meal_food','buffet','food','created_at','updated_at']
-        
-    
+        model  = Meal
+        fields = ['id','name','time']
 
 class MealFoodSerializer(serializers.ModelSerializer):
     food = FoodSerializer(read_only=True)
@@ -178,6 +168,35 @@ class MealFoodSerializer(serializers.ModelSerializer):
         model  = MealFood
         fields = ['id','food','price','number_in_stock']
         read_only_fields = ['id','food']
+        
+        
+    def validate(self, attrs):
+        if attrs['number_in_stock'] < 0:
+            raise serializers.ValidationError("number_in_stock must be positive")
+        user = self.context.get('user')
+        if not hasattr(user,'organization_admin'):
+            raise serializers.ValidationError("You are not an admin")
+        buffet_id = self.context.get('buffet_id')
+        buffet = user.organization_admin.organization.buffets.filter(id=buffet_id).first()
+        if not buffet:
+            raise serializers.ValidationError("Buffet not found")
+        menu_date = self.context.get('menu_date')
+        daily_menu = buffet.daily_menus.filter(date=menu_date).first()
+        if not daily_menu:
+            raise serializers.ValidationError("Daily menu not found")
+        meal_id = self.context.get('meal_id')
+        meal = daily_menu.meals.filter(id=meal_id).first()
+        if not meal:
+            raise serializers.ValidationError("Meal not found")
+        return attrs
+    
+class MealFoodCreateUpdateSerializer(MealFoodSerializer):
+    food = serializers.PrimaryKeyRelatedField(queryset= Food.objects.all(),many=False)
+    
+    class Meta:
+        model  = MealFood
+        fields = ['id','food','price','number_in_stock']
+        read_only_fields = ['id']
         
 
 
@@ -193,9 +212,43 @@ class MealSerializer(serializers.ModelSerializer):
         
 class DailyMenuSerializer(serializers.ModelSerializer):
     meals = MealSerializer(many=True, read_only=True)
-    buffet = BuffetSerializer(read_only=True)
 
     class Meta:
         model  = DailyMenu
-        fields = ['id','date','meals','buffet','created_at','updated_at']
-        read_only_fields = ['id','date','meals','buffet','created_at','updated_at']        
+        fields = ['id','date','meals']
+        read_only_fields = ['id','date','meals']   
+        
+        
+class ReserveSerializer(serializers.ModelSerializer):
+    meal_food = MealFoodSerializer(read_only=True)
+    buffet = BuffetSerializer(read_only=True)
+
+    
+    class Meta:
+        model  = Reserve
+        fields = ['id','meal_food','buffet','created_at','updated_at']
+        read_only_fields = ['id','meal_food','buffet','created_at','updated_at']
+
+
+class ReserveCreateUpdateSerializer(serializers.ModelSerializer):
+    meal_food = serializers.PrimaryKeyRelatedField(queryset= MealFood.objects.all(),many=False)
+    
+    class Meta:
+        model  = Reserve
+        fields = ['id','meal_food']
+
+    def validate(self, attrs):
+        # check that the client have access to this meal food in its buffets?
+        user = self.context.get('user')
+        if not hasattr(user,'client'):
+            raise serializers.ValidationError("You are not a client")
+        joined_buffets = user.client.joined_buffets()
+        buffet = attrs['meal_food'].meal.dailyMenu.buffet
+        if not buffet in joined_buffets:
+            raise serializers.ValidationError("You are not allowed to reserve this meal food")
+        # check that the meal food is in stock
+        meal_food = attrs['meal_food']
+        if not meal_food.number_in_stock > 0:
+            raise serializers.ValidationError("This meal food is out of stock")
+        return attrs
+    
