@@ -16,24 +16,19 @@ router.register('reserve',views.ReserveViewSet,'reserving')
 router.register('buffets',views.BuffetViewSet,'buffet')
 router.register('reservs',views.ReservationViewSet,'reservs')
 
-
-buffet_router = routers.NestedSimpleRouter(router,r'buffets',lookup='buffet')
-buffet_router.register(r'menus',views.DailyMenuViewSet,basename='menu')
-
-
-daily_router = routers.NestedSimpleRouter(buffet_router,r'menus',lookup='menu')
-daily_router.register(r'meals',views.MealViewSet,basename='meal')
-
-
 buffets_router = routers.NestedDefaultRouter(router,'buffets',lookup='buffet') 
 buffets_router.register('rates',views.BuffetsRateViewSet,'rates')
+buffets_router.register('menus',views.DailyMenuViewSet,basename='menu')
+buffets_router.register('weekly-menus',views.WeeklyMenuViewSet,basename='weekly-menu')
+
+daily_router = routers.NestedSimpleRouter(buffets_router,r'menus',lookup='menu')
+daily_router.register(r'meals',views.MealViewSet,basename='meal')
 
 meal_router = routers.NestedSimpleRouter(daily_router,r'meals',lookup='meal')
 meal_router.register(r'meals',views.MealFoodViewSet,basename='food')
 
 
-urlpatterns = [path(r'', include(router.urls)),
-               path(r'', include(buffet_router.urls)),
-                path(r'', include(daily_router.urls)),
-                 path(r'', include(meal_router.urls)) ] + router.urls + buffets_router.urls
+urlpatterns =\
+    router.urls + buffets_router.urls \
+    + daily_router.urls + meal_router.urls
 

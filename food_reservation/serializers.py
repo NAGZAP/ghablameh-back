@@ -54,7 +54,7 @@ class MenuSerializer(NestedHyperlinkedModelSerializer):
         model = DailyMenu
         fields = ['id','date', 'created_at', 'updated_at']
 
-class MealFoodSerializer(serializers.ModelSerializer):
+class SimpleMealFoodSerializer(serializers.ModelSerializer):
     
     food = serializers.PrimaryKeyRelatedField(queryset= Food.objects.all(),many=False)
 
@@ -64,20 +64,6 @@ class MealFoodSerializer(serializers.ModelSerializer):
     class Meta:
         model = MealFood
         fields = ['food','price','number_in_stock','id']
-
-# class MealSerializer(NestedHyperlinkedModelSerializer):
-#     parent_lookup_kwargs = {
-#         'buffet_pk': 'dailyMenu__buffet__pk',
-#         'dailyMenu_pk':'dailyMenu__pk' 
-#     }
-#     meal_food = MealFoodSerializer(many=True)
-#     name = serializers.CharField(source = 'meal.name')
-#     time = serializers.TimeField(source = 'meal.time')
-#     class Meta :
-#         model = Meal
-#         fields = ['id','dailyMenu','created_at', 'updated_at','time','name','meal_food']
-
-
 
 
 
@@ -160,8 +146,7 @@ class RateSerializer(serializers.ModelSerializer):
 
 
 
-
-class MealSerializer(serializers.ModelSerializer):
+class SimpleMealSerializer(serializers.ModelSerializer):
 
     class Meta:
         model  = Meal
@@ -169,11 +154,10 @@ class MealSerializer(serializers.ModelSerializer):
     
 
 class FoodSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model  = Food
-        fields = ['id','name','description']
-
+    
+        class Meta:
+            model  = Food
+            fields = ['id','name','description']
 
 class ReserveSerializer(serializers.ModelSerializer):
     meal_food = serializers.CharField()
@@ -184,3 +168,34 @@ class ReserveSerializer(serializers.ModelSerializer):
         model  = Reserve
         fields = ['id','client','meal_food','buffet','food','created_at','updated_at']
         read_only_fields = ['id','meal_food','buffet','food','created_at','updated_at']
+        
+    
+
+class MealFoodSerializer(serializers.ModelSerializer):
+    food = FoodSerializer(read_only=True)
+    
+    class Meta:
+        model  = MealFood
+        fields = ['id','food','price','number_in_stock']
+        read_only_fields = ['id','food']
+        
+
+
+class MealSerializer(serializers.ModelSerializer):
+    items = MealFoodSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model  = Meal
+        fields = ['id','name','time','items','created_at','updated_at']
+        read_only_fields = ['id','items','created_at','updated_at']  
+
+
+        
+class DailyMenuSerializer(serializers.ModelSerializer):
+    meals = MealSerializer(many=True, read_only=True)
+    buffet = BuffetSerializer(read_only=True)
+
+    class Meta:
+        model  = DailyMenu
+        fields = ['id','date','meals','buffet','created_at','updated_at']
+        read_only_fields = ['id','date','meals','buffet','created_at','updated_at']        
