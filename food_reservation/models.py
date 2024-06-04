@@ -2,6 +2,7 @@ from typing import Iterable
 from django.db import models
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
+from django.db import transaction
 from . import validators
 
 
@@ -201,7 +202,22 @@ class Reserve (models.Model):
     def __str__(self) -> str:
         return self.client.user.username + _(" reserved ") + self.meal_food.food.name + _(" at ") + self.meal_food.meal.name
     
+    @transaction.atomic
     def save(self, *args, **kwargs):
+        self.meal_food.number_in_stock -= 1
+        self.meal_food.save()
         self.date = self.meal_food.meal.dailyMenu.date
         self.buffet = self.meal_food.meal.dailyMenu.buffet
+        self.client.user.wallet.withdraw(self.meal_food.price, _(f'Reservation of {self.meal_food.food.name} at {self.meal_food.meal.name}'))
+        self.buffet.organization.admin.user.wallet.deposit(self.meal_food.price, _(f'Income from reservation of {self.meal_food.food.name} at {self.meal_food.meal.name}'))
         super().save(*args, **kwargs)
+        
+    
+    @transaction.atomic
+    def delete(self, *args, **kwargs):
+        self.client.user.wallet.deposit(self.meal_food.price, _(f'Refund for reservation of {self.meal_food.food.name} at {self.meal_food.meal.name}'))
+        self.buffet.organization.admin.user.wallet.withdraw(self.meal_food.price, _(f'Income from reservation of {self.meal_food.food.name} at {self.meal_food.meal.name}'))
+        self.meal_food.number_in_stock += 1
+        self.meal_food.save()
+        super().delete(*args, **kwargs)
+        

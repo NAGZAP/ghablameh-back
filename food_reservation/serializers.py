@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from rest_framework_nested.serializers import NestedHyperlinkedModelSerializer
 from .models import *
@@ -241,18 +242,21 @@ class ReserveCreateUpdateSerializer(serializers.ModelSerializer):
         # check that the client have access to this meal food in its buffets?
         user = self.context.get('user')
         if not hasattr(user,'client'):
-            raise serializers.ValidationError("You are not a client")
+            raise serializers.ValidationError(_("You are not a client"))
         joined_buffets = user.client.joined_buffets()
         buffet = attrs['meal_food'].meal.dailyMenu.buffet
         if not buffet in joined_buffets:
-            raise serializers.ValidationError("You are not allowed to reserve this meal food")
+            raise serializers.ValidationError(_("You are not allowed to reserve this meal food"))
         # check that the meal food is in stock
         meal_food = attrs['meal_food']
         if not meal_food.number_in_stock > 0:
-            raise serializers.ValidationError("This meal food is out of stock")
+            raise serializers.ValidationError(_("This meal food is out of stock"))
         
         # check that client don't have 2 reserve on same meal 
         if user.client.reservations.filter(meal_food__meal=meal_food.meal).exists():
-            raise serializers.ValidationError("You already have a reserve on this meal")
+            raise serializers.ValidationError(_("You already have a reserve on this meal"))
+        
+        if not user.check_balance(meal_food.price):
+            raise serializers.ValidationError(_("Not enough balance"))
+        
         return attrs
-    

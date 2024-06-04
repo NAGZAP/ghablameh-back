@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth import get_user_model
+from django.utils.translation import gettext_lazy as _
+from django.db import transaction
 
 User = get_user_model()
 
@@ -15,8 +17,17 @@ class Wallet(models.Model):
     def __str__(self) -> str:
         return self.user.username
     
-    def deposit(self, amount):
+    def deposit(self, amount, description=None):
+        Transaction.objects.create(wallet=self, amount=amount, description=description)
         self.balance += amount
+        self.save()
+    
+    @transaction.atomic
+    def withdraw(self, amount, description=None):
+        if self.balance < amount:
+            raise ValueError(_("Not enough balance"))
+        Transaction.objects.create(wallet=self, amount=-amount, description=description)
+        self.balance -= amount
         self.save()
         
         
@@ -24,7 +35,7 @@ class Wallet(models.Model):
 class Transaction(models.Model):
     wallet = models.ForeignKey(Wallet, on_delete=models.PROTECT, related_name='transactions')
     amount = models.DecimalField(max_digits=12, decimal_places=0)
-    description = models.TextField()
+    description = models.TextField(blank=True, null=True)
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

@@ -30,6 +30,24 @@ class User(AbstractUser):
     email = models.EmailField(unique=True)
     is_verified = models.BooleanField(default=False)
     
+    
+    def __str__(self):
+        return self.username
+    
+    def check_balance(self,amount:int) -> bool:
+        return self.get_balance() >= amount
+        
+    
+    def get_balance(self) -> int:
+        return self.wallet.balance
+    
+    def deposit(self,amount:int, description:str=None) -> None:
+        self.wallet.deposit(amount)
+    
+    def withdraw(self,amount:int, description:str=None) -> None:
+        self.wallet.withdraw(amount)
+        
+    
 class EmailVerification(models.Model):
     user = models.OneToOneField(User,on_delete=models.CASCADE,related_name='email_verification')
     code = models.CharField(max_length=5,null=True,blank=True)
