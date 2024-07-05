@@ -13,18 +13,18 @@ def create_notification(sender, instance, created, **kwargs):
     if sender.__name__ == "OrganizationMemberShipRequest" and instance.status == 'A':
         Notification.objects.create(
             user=instance.client.user,
-            title=_(f"Membership Request Accepted"),
-            message=_(f"You have been accepted into {instance.organization.name}.")
+            title=_(f" درخواست عضویت شما در {instance.organization.name} پذیرفته شد"),
+            message=_(f"")
         )
     elif sender.__name__ == "OrganizationMemberShipRequest" and instance.status == 'R':
         Notification.objects.create(
             user=instance.client.user,
-            title=_(f"Membership Request Rejected"),
+            title=_(f" درخواست عضویت شما در {instance.organization.name} رد شد"),
             message=_(f"Your request to join {instance.organization.name} has been rejected.")
         )
     elif sender.__name__ == "Transaction" and created:
         amount = instance.amount
-        title = _(f"deposit {amount}") if amount > 0 else _(f"withdraw {-amount}")
+        title = _(f"مبلغ {amount} به حساب شما افزوده شد") if amount > 0 else _(f"مبلغ {amount} از حساب شما کسر شد")
         message = instance.description if instance.description else _(f"Transaction of {amount}")
         Notification.objects.create(
             user=instance.wallet.user,
