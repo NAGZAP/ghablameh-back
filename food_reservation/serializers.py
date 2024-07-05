@@ -7,6 +7,79 @@ from .models import *
 
 User = get_user_model()
 
+
+
+
+
+
+class ClientSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(source='user.first_name')
+    last_name = serializers.CharField(source='user.last_name')
+    username = serializers.CharField(source='user.username')
+    email = serializers.EmailField(source='user.email')
+    phone_number = serializers.CharField(source='user.phone_number')
+    date_joined = serializers.DateTimeField(source='user.date_joined',read_only=True)
+    image_base64 = serializers.CharField(required=False,write_only=True)
+    image_url = serializers.SerializerMethodField('get_image_url')
+    
+    def get_image_url(self, obj):
+        if obj.image:
+            return obj.image.url
+        return None
+    class Meta:
+        model = Client
+        fields = ['id','image_base64','image_url','gender','birthdate','first_name','last_name','username','email','phone_number','date_joined','created_at','updated_at']
+        
+    
+    def validate_image_base64(self,value):
+        if value is not None:
+            try:
+                format, imgstr = value.split(';base64,') 
+                ext = format.split('/')[-1] 
+                base64.b64decode(imgstr)
+            except:
+                raise serializers.ValidationError('عکس نامعتبر است')
+        return value
+        
+    
+    def update(self, instance, validated_data):
+        user = instance.user
+        user_data = validated_data.pop('user',{})
+        user.first_name = user_data.get('first_name',user.first_name)
+        user.last_name = user_data.get('last_name',user.last_name)
+        user.username = user_data.get('username',user.username)
+        user.email = user_data.get('email',user.email)
+        user.phone_number = user_data.get('phone_number',user.phone_number)
+        user.save()
+        image_data = validated_data.pop('image_base64',None)
+        if image_data is not None:
+            if image_data is not None:
+                format, imgstr = image_data.split(';base64,') 
+                ext = format.split('/')[-1] 
+                data = ContentFile(base64.b64decode(imgstr), name=f'{uuid.uuid4()}.{ext}')
+                instance.image.save(data.name, data, save=True)
+
+            
+
+        super().update(instance, validated_data)
+
+        return instance
+    
+    def validate_username(self,value):
+        if self.instance.user.username != value and User.objects.filter(username=value).exists():
+            raise serializers.ValidationError('نام کاربری تکراری است')
+        return value
+    
+    def validate_email(self,value):
+        if self.instance.user.email != value and User.objects.filter(email=value).exists():
+            raise serializers.ValidationError('ایمیل تکراری است')
+        return value
+    
+    def validate_phone_number(self,value):
+        if self.instance.user.phone_number != value and User.objects.filter(phone_number=value).exists():
+            raise serializers.ValidationError('شماره تلفن تکراری است')
+        return value
+
 class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -86,10 +159,10 @@ class BuffetListSerializer(serializers.ModelSerializer):
 class MemberShipRequestSerializer(serializers.ModelSerializer):
     client_name = serializers.CharField(source='client.user.username', read_only=True)
     organization_name = serializers.CharField(source='organization.name', read_only=True)
-
+    client = ClientSerializer(read_only=True)
     class Meta:
         model  = OrganizationMemberShipRequest
-        fields = ['id','client_name', 'organization_name', 'status', 'created_at', 'updated_at']
+        fields = ['id','client_name', 'client', 'organization_name', 'status', 'created_at', 'updated_at']
 
 
 
