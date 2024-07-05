@@ -168,7 +168,7 @@ class FoodViewSet(
     filterset_class = FoodFilter
     permission_classes = [IsOrganizationAdmin]
     queryset = Food.objects.all()
-    pagination_class = CustomPageNumberPagination
+    # pagination_class = CustomPageNumberPagination
     serializer_class = FoodSerializer
     
 
